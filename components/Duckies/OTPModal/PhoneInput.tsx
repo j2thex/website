@@ -4,8 +4,9 @@ import useWallet from '../../../hooks/useWallet';
 import Image from 'next/image';
 import { dispatchAlert } from '../../../features/alerts/alertsSlice';
 import { useAppDispatch } from '../../../app/hooks';
-import jwt from 'jsonwebtoken';
 import { appConfig } from '../../../config/app';
+import { useSendPhoneVerificationMutation } from '../../../features/phone/phoneApi';
+import { useFetchCountriesQuery } from '../../../features/countries/countriesApi';
 
 interface PhoneInputProps {
     savePhone: (value: string) => void;
@@ -28,11 +29,13 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     const [isSendCodeDisabled, setIsSendCodeDisabled] = React.useState<boolean>(false);
     const [isInputInvalid, setIsInputInvalid] = React.useState<boolean>(false);
     const [cooldownLeft, setCooldownLeft] = React.useState<number>(0);
-    const [countriesArray, setCountriesArray] = React.useState([]);
+    const [countriesArray, setCountriesArray] = React.useState<any>([]);
 
     const dropdownRef = React.useRef(null);
     const { account } = useWallet();
     const dispatch = useAppDispatch();
+    const [sendPhoneVerification] = useSendPhoneVerificationMutation();
+    const { data: fetchCountriesResponse } = useFetchCountriesQuery();
 
     React.useEffect(() => {
         savePhone(`+${selectedPhoneCode}${phoneNumber}`);
@@ -42,22 +45,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
         savePhone,
     ]);
 
-    const fetchCountries = React.useCallback(async () => {
-        fetch('/api/public/countries', {
-            method: 'POST',
-        })
-        .then(async (res: Response) => {
-            const data = await res.json();
-
-            setCountriesArray(data.countries);
-            setSelectedPhoneCode(data.countries[0].phone_code);
-            setSelectedFlagHref(data.countries[0].flag_href);
-        });
-    }, []);
-
     React.useEffect(() => {
-        fetchCountries();
-    }, []);
+        if (!fetchCountriesResponse?.countries) {
+            return;
+        }
+        setCountriesArray(fetchCountriesResponse.countries);
+        setSelectedPhoneCode(fetchCountriesResponse.countries[0].phone_code);
+        setSelectedFlagHref(fetchCountriesResponse.countries[0].flag_href);
+    }, [fetchCountriesResponse]);
 
     React.useEffect(() => {
         const handleClickOutside = (event: Event) => {
@@ -131,35 +126,29 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
     }, []);
 
     const sendCode = React.useCallback(async () => {
-        fetch('/api/private/users/phone/send', {
-            method: 'POST',
-            body: jwt.sign({
-                phoneNumber: `+${selectedPhoneCode}${phoneNumber}`,
-                address: account,
-            }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
+        sendPhoneVerification({
+            phoneNumber: `+${selectedPhoneCode}${phoneNumber}`,
+            address: account || '',
         })
-        .then(async (res) => {
-            const response = await res.json();
-            if (response.error) {
-                dispatch(dispatchAlert({
-                    type: 'error',
-                    title: 'Error',
-                    message: response.error,
-                }));
-                if (response.timeLeft) {
-                    launchCooldown(response.timeLeft);
-                }
-            } else {
-                if (!res.ok) {
-                    setIsInputInvalid(true);
+            .unwrap()
+            .then(() => {
+                launchCooldown();
+            })
+            .catch((errorResponse: any) => {
+                const data = errorResponse.data;
+                if (data.error) {
+                    dispatch(dispatchAlert({
+                        type: 'error',
+                        title: 'Error',
+                        message: data.error,
+                    }));
+                    if (data.timeLeft) {
+                        launchCooldown(data.timeLeft);
+                    }
                 } else {
-                    launchCooldown();
+                    setIsInputInvalid(true);
                 }
-            }
-        })
-        .catch((error: any) => {
-            console.log(error);
-        });
+            });
     }, [selectedPhoneCode, phoneNumber, account]);
 
     const renderCountryCodes = React.useMemo(() => {

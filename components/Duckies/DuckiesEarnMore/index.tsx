@@ -14,6 +14,7 @@ import useMetaMask from '../../../hooks/useMetaMask';
 import Image from 'next/image';
 import { analytics } from '../../../lib/analitics';
 import copyToClipboard from 'copy-to-clipboard';
+import { useFetchReferralTokenQuery } from '../../../features/referral/referralApi';
 
 interface DuckiesEarnMoreProps {
     handleOpenModal: () => void;
@@ -32,17 +33,22 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
     const triedToEagerConnect = useEagerConnect();
 
     const { supportedChain } = useMetaMask();
+    const {
+        data: fetchReferralResponse,
+        isSuccess: isFetchReferralSuccessful
+    } = useFetchReferralTokenQuery(account || '', {
+        skip: !active || !account,
+    });
 
     const isReady = useMemo(() => {
         return supportedChain && triedToEagerConnect && active && account;
     }, [supportedChain, triedToEagerConnect, active, account]);
 
-    const getSharableLink = React.useCallback(async (account: string) => {
-        const response = await fetch(`/api/private/users/referralToken?address=${account}`);
-
-        const data = await response.json();
-        setShareableLink(data.token);
-    }, []);
+    useEffect(() => {
+        if (isFetchReferralSuccessful) {
+            setShareableLink(fetchReferralResponse.token);
+        }
+    }, [fetchReferralResponse, isFetchReferralSuccessful]);
 
     useEffect(() => {
         if (!account) {
@@ -180,12 +186,6 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
             },
         ];
     }, [shareableLinkPrefix, shareableLink, message]);
-
-    React.useEffect(() => {
-        if (active && account) {
-            getSharableLink(account);
-        }
-    }, [active, account, getSharableLink]);
 
     React.useEffect(() => {
         if (isBrowserDefined) {

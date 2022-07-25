@@ -1,5 +1,6 @@
 import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit';
 import { alertsReducer } from '../features/alerts/alertsSlice';
+import { api } from './api';
 import { globalsReducer } from '../features/globals/globalsSlice';
 
 export * from '../features/alerts/alertsSlice';
@@ -9,6 +10,10 @@ export const store = configureStore({
     reducer: {
         alerts: alertsReducer,
         globals: globalsReducer,
+        [api.reducerPath]: api.reducer,
+    },
+    middleware: (getDefaultMiddleware) => {
+        return getDefaultMiddleware().concat(api.middleware);
     },
 });
 

@@ -18,7 +18,7 @@ import useWallet from '../../../hooks/useWallet';
 import { DuckiesPrizes } from '../DuckiesPrizes'
 import { DuckiesPrizesList } from '../DuckiesPrizes/defaults';
 import { DuckiesBanned } from '../DuckiesBanned';
-import jwt from 'jsonwebtoken';
+import { useFetchUserQuery } from '../../../features/users/userApi';
 
 interface DuckiesLayoutProps {
     bounties: any;
@@ -45,6 +45,15 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     const router = useRouter();
     const query = router.query;
     const supabaseUser = supabase.auth.user();
+    const { data: fetchUserResponse, isSuccess: isFetchUserSuccessful } = useFetchUserQuery(account || '', {
+        skip: !isReady,
+    });
+
+    React.useEffect(() => {
+        if (isFetchUserSuccessful) {
+            setUserStatus(fetchUserResponse.status || '');
+        }
+    }, [fetchUserResponse, isFetchUserSuccessful]);
 
     useSocialConnections(user);
 
@@ -69,31 +78,11 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
         }
     }, [supabaseUser, user]);
 
-    const getUserStatus = React.useCallback(async () => {
-        if (account) {
-            const response = await fetch('/api/private/users/me', {
-                method: 'POST',
-                body: jwt.sign({
-                    account,
-                }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
-            });
-
-            const data = await response.json();
-            setUserStatus(data.userStatus);
-        }
-    }, [account, setUserStatus]);
-
     React.useEffect(() => {
         if ((isReady && currentModal === 'metamask') || (supabaseUser && currentModal === 'social_auth')) {
             handleCloseModal();
         }
     }, [isReady, supabaseUser, currentModal]);
-
-    React.useEffect(() => {
-        if (isReady) {
-            getUserStatus();
-        }
-    }, [isReady, getUserStatus]);
 
     const handleOpenModal = React.useCallback(() => {
         setIsOpenModal(true);

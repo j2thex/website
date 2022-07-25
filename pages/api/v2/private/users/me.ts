@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '../../../../lib/SupabaseConnector';
+import { supabase } from '../../../../../lib/SupabaseConnector';
 import jwt from 'jsonwebtoken';
-import { withDuckiesSession } from '../../../../helpers/withDuckiesSession';
-import { hidePhoneNumber } from '../../../../helpers/hidePhoneNumbers';
+import { withDuckiesSession } from '../../../../../helpers/withDuckiesSession';
+import { hidePhoneNumber } from '../../../../../helpers/hidePhoneNumbers';
 
 async function handler(
     req: NextApiRequest,
@@ -21,7 +21,7 @@ async function handler(
             .single();
 
         return res.status(200).json({
-            userStatus: data?.state,
+            status: data?.state,
             isPhoneVerified: data?.phone_verified,
             phoneNumber: hidePhoneNumber(data?.phone_number),
         });

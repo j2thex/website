@@ -8,8 +8,14 @@ import { isBrowser } from '../helpers/isBrowser';
 import useMetaMask from './useMetaMask';
 import { useEagerConnect } from './useEagerConnect';
 import { setIsPhoneOtpCompleted, setIsRewardsClaimProcessing } from '../features/globals/globalsSlice';
-import jwt from 'jsonwebtoken';
 import { analytics } from '../lib/analitics';
+import {
+    useFetchMultipleTransactionsMutation,
+    useFetchReferralTransactionMutation,
+    useFetchSingleTransactionMutation,
+} from '../features/transactions/transactionApi';
+import { useFetchUserQuery } from '../features/users/userApi';
+
 
 export default function useBounties(bounties: any) {
     const [isSingleBountyProcessing, setIsSingleBountyProcessing] = React.useState<boolean>(false);
@@ -27,6 +33,23 @@ export default function useBounties(bounties: any) {
 
     const isRewardsClaimProcessing = useAppSelector(state => state.globals.isRewardsClaimProcessing);
     const isPhoneOtpCompleted = useAppSelector(state => state.globals.isPhoneOtpCompleted);
+    const [fetchSingleTransaction] = useFetchSingleTransactionMutation();
+    const [fetchReferralTransaction] = useFetchReferralTransactionMutation();
+    const [fetchMultipleTransactions] = useFetchMultipleTransactionsMutation();
+
+    const {
+        data: fetchUserResponse,
+        isSuccess: isFetchUserSuccessful,
+        refetch: refetchUser
+    } = useFetchUserQuery(account || '', {
+        skip: !signer || !account,
+    });
+
+    React.useEffect(() => {
+        if (isFetchUserSuccessful) {
+            setIsPhoneVerified(fetchUserResponse.isPhoneVerified || false);
+        }
+    }, [fetchUserResponse, isFetchUserSuccessful]);
 
     const isReady = React.useMemo(() => {
         return supportedChain && triedToEagerConnect && active && account;
@@ -45,25 +68,6 @@ export default function useBounties(bounties: any) {
         })();
     }, [isReady, duckiesContract, isRewardsClaimed, affiliates, referral_token, signer]);
 
-    const getIsPhoneVerified = React.useCallback(async () => {
-        if (account) {
-            const { isPhoneVerified } = await (await fetch('/api/private/users/me', {
-                method: 'POST',
-                body: jwt.sign({
-                    account,
-                }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
-            })).json();
-
-            setIsPhoneVerified(isPhoneVerified);
-        }
-    }, [account]);
-
-    React.useEffect(() => {
-        if (signer) {
-            getIsPhoneVerified();
-        }
-    }, [signer]);
-
     React.useEffect(() => {
         if (isRewardsClaimed || isPhoneOtpCompleted) {
             const newItems = bounties.map((item: any) => {
@@ -78,14 +82,13 @@ export default function useBounties(bounties: any) {
             }
 
             setBountyItems(newItems);
-            getIsPhoneVerified();
+            refetchUser();
         }
     }, [
         isRewardsClaimed,
         bounties,
         account,
         isPhoneOtpCompleted,
-        getIsPhoneVerified,
         dispatch,
     ]);
 
@@ -180,9 +183,10 @@ export default function useBounties(bounties: any) {
                 },
             });
             dispatch(setIsRewardsClaimProcessing(true));
-            const { transaction } = await (await fetch(
-                `/api/private/tx/bounty?bountyID=${bountyToClaim.fid}&&account=${account}`
-            )).json();
+            const { transaction } = await fetchSingleTransaction({
+                bountyID: bountyToClaim.fid,
+                account: account || '',
+            }).unwrap()
 
             try {
                 const tx = await signer.sendTransaction(transaction);
@@ -245,11 +249,12 @@ export default function useBounties(bounties: any) {
                         duckies_amount_claim: 10000,
                     },
                 });
-                const response = await fetch(`/api/private/tx/referral?token=${referral_token}&account=${account}`);
+                const { transaction } = await fetchReferralTransaction({
+                    referralToken: referral_token || '',
+                    account,
+                }).unwrap();
 
-                if (response.status !== 400 && response.status !== 500) {
-                    const { transaction } = await response.json();
-
+                if (transaction) {
                     const tx = await signer.sendTransaction(transaction);
                     await tx.wait();
                     localStorage.removeItem('referral_token');
@@ -304,9 +309,10 @@ export default function useBounties(bounties: any) {
                         duckies_amount_claim: amountToClaim,
                     },
                 });
-                const { transaction } = await (await fetch(
-                    `/api/private/tx/bountyAll?bountyIDs=${bountiesToClaim}&account=${account}`
-                )).json();
+                const { transaction } = await fetchMultipleTransactions({
+                    bountyIDs: bountiesToClaim,
+                    account,
+                }).unwrap();
 
                 try {
                     const tx = await signer.sendTransaction(transaction);

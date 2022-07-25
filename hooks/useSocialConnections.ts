@@ -3,26 +3,7 @@ import { supabaseLogout } from '../lib/SupabaseConnector';
 import { useEagerConnect } from './useEagerConnect';
 import useMetaMask from './useMetaMask';
 import useWallet from './useWallet';
-import jwt from 'jsonwebtoken';
-
-const saveAddressToDB = async (address: string) => {
-    await fetch('/api/private/users/socials/saveAddress', {
-        method: 'POST',
-        body: jwt.sign({
-            address,
-        }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
-    });
-};
-
-const saveEmailToDB = async (email: string, address: string) => {
-    await fetch('/api/private/users/socials/saveEmail', {
-        method: 'POST',
-        body: jwt.sign({
-            email,
-            address,
-        }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
-    });
-};
+import { useSaveAddressMutation, useSaveEmailMutation } from '../features/socials/socialsApi';
 
 export default function useSocialConnections(supabaseUser: any) {
     const [sessionAccount, setSessionAccount] = React.useState<string>('');
@@ -31,6 +12,8 @@ export default function useSocialConnections(supabaseUser: any) {
     const { active, account } = useWallet();
     const { supportedChain } = useMetaMask();
     const triedToEagerConnect = useEagerConnect();
+    const [saveAddress] = useSaveAddressMutation();
+    const [saveEmail] = useSaveEmailMutation();
 
     const isReady = React.useMemo(() => {
         return supportedChain && triedToEagerConnect && active && account;
@@ -42,7 +25,9 @@ export default function useSocialConnections(supabaseUser: any) {
 
     React.useEffect(() => {
         if (isReady && account) {
-            saveAddressToDB(account);
+            saveAddress({
+                address: account,
+            });
         }
     }, [isReady, account]);
 
@@ -58,7 +43,10 @@ export default function useSocialConnections(supabaseUser: any) {
 
     React.useEffect(() => {
         if (userEmail && sessionAccount) {
-            saveEmailToDB(supabaseUser.email, sessionAccount);
+            saveEmail({
+                email: supabaseUser.email, 
+                address: sessionAccount,
+            });
         }
     }, [userEmail, sessionAccount]);
 }

@@ -5,10 +5,11 @@ import { OTPInput } from './OTPInput';
 import useWallet from '../../../hooks/useWallet';
 import { setIsPhoneOtpCompleted } from '../../../features/globals/globalsSlice';
 import { useAppDispatch } from '../../../app/hooks';
-import jwt from 'jsonwebtoken';
 import { Decimal } from '../../Decimal';
 import { dispatchAlert } from '../../../app/store';
 import { Captcha } from '../Captcha';
+import { useVerifyPhoneMutation } from '../../../features/phone/phoneApi';
+import { useFetchUserQuery } from '../../../features/users/userApi';
 
 interface OTPModalProps {
     bounty: string | number;
@@ -38,6 +39,16 @@ export const OTPModal: React.FC<OTPModalProps> = ({
 
     const { account } = useWallet();
     const dispatch = useAppDispatch();
+    const [verifyPhone] = useVerifyPhoneMutation();
+    const { data: fetchUserResponse, isSuccess: isFetchUserSuccessful } = useFetchUserQuery(account || '', {
+        skip: !isSuccess || !account,
+    });
+
+    React.useEffect(() => {
+        if (isFetchUserSuccessful) {
+            setVerifiedPhone(fetchUserResponse.phoneNumber || '');
+        }
+    }, [fetchUserResponse, isFetchUserSuccessful]);
 
     React.useEffect(() => {
         setShouldResetCaptcha(true);
@@ -48,51 +59,31 @@ export const OTPModal: React.FC<OTPModalProps> = ({
         setIsSuccess(!!isClaimed);
     }, [isClaimed]);
 
-    const fetchPhone = React.useCallback(async () => {
-        const { phoneNumber } = await (await fetch('/api/private/users/me', {
-            method: 'POST',
-            body: jwt.sign({
-                account,
-            }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
-        })).json();
-
-        setVerifiedPhone(phoneNumber);
-    }, []);
-
-    React.useEffect(() => {
-        if (isSuccess && account) {
-            fetchPhone();
-        }
-    }, [account, isSuccess]);
-
     const handleSubmit = React.useCallback(async () => {
         setShouldResetCaptcha(true);
         setIsCaptchaResolved(false);
-
-        fetch('/api/private/users/phone/verify', {
-            method: 'POST',
-            body: jwt.sign({
-                phoneNumber: phone,
-                otp,
-                address: account,
-            }, process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''),
+        verifyPhone({
+            phoneNumber: phone,
+            otp,
+            address: account || '',
         })
-        .then(async (res: Response) => {
-            const data = await res.json();
-
-            if (data.error) {
+            .unwrap()
+            .then((data: any) => {
+                if (data.success) {
+                    setIsSuccess(true);
+                    dispatch(setIsPhoneOtpCompleted(true));
+                } else {
+                    setIsOtpIncorrect(true);
+                }
+            })
+            .catch((errorResponse: any) => {
+                const data = errorResponse.data;
                 dispatch(dispatchAlert({
                     type: 'error',
                     title: 'Error',
                     message: data.error,
                 }));
-            } else if (data.success) {
-                setIsSuccess(true);
-                dispatch(setIsPhoneOtpCompleted(true));
-            } else {
-                setIsOtpIncorrect(true);
-            }
-        });
+            });
     }, [otp, phone, account, dispatch]);
 
     const handleResolveCaptcha = React.useCallback(() => {
