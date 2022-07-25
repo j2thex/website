@@ -13,6 +13,7 @@ import useWallet from '../../../hooks/useWallet';
 import useMetaMask from '../../../hooks/useMetaMask';
 import Image from 'next/image';
 import { analytics } from '../../../lib/analitics';
+import copyToClipboard from 'copy-to-clipboard';
 
 interface DuckiesEarnMoreProps {
     handleOpenModal: () => void;
@@ -274,7 +275,7 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
     }, [isReady])
 
     const handleCopy = React.useCallback((value: string) => {
-        navigator.clipboard.writeText(value);
+        copyToClipboard(value);
         analytics({
             type: 'otherEvent',
             name: 'duckies_referral_link_copy_click',

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import * as React from 'react';
+import copyToClipboard from 'copy-to-clipboard';
 
 const HtmlSerializer = {
     paragraph: ({ children }: any) => {
@@ -13,7 +14,7 @@ const HtmlSerializer = {
         <pre
             className="cursor-pointer"
             onClick={(e: any) => {
-                navigator.clipboard.writeText(e.target.innerText);
+                copyToClipboard(e.target.innerText);
             }}
         >
             {children}

@@ -13,6 +13,7 @@ import useBounties from '../../../hooks/useBounties';
 import useDuckiesBalance from '../../../hooks/useDuckiesBalance';
 import { Decimal } from '../../Decimal';
 import { analytics } from '../../../lib/analitics';
+import copyToClipboard from 'copy-to-clipboard';
 
 interface DuckiesHeroProps {
     handleOpenModal: () => void;
@@ -261,7 +262,7 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
     ]);
 
     const handleCopy = React.useCallback(() => {
-        navigator.clipboard.writeText(appConfig.duckiesSmartContractAddress);
+        copyToClipboard(appConfig.duckiesSmartContractAddress);
         setIsCopyClicked(true);
 
         analytics({
