@@ -3,6 +3,9 @@ import Image from 'next/image';
 import { DuckiesModalWindow } from '../../DuckiesModalWindow';
 import useMetaMask from '../../../../hooks/useMetaMask';
 import { analytics } from '../../../../lib/analitics';
+import { useSetMobileDevice } from '../../../../hooks/useMobileDevice';
+import { useRouter } from 'next/router';
+import { isBrowser } from '../../../../helpers';
 
 interface MetamaskConnectModalProps {
     isOpenModal: boolean;
@@ -21,14 +24,27 @@ export const MetamaskConnectModal: React.FC<MetamaskConnectModalProps> = ({
         isMetaMaskInstalled,
     } = useMetaMask();
 
+    const router = useRouter();
+    const isMobile = useSetMobileDevice();
+
     const handleConnectMetamaskClick = React.useCallback(() => {
+        if (isMobile && isBrowser() && !isMetaMaskInstalled) {
+            router.push(window.location.href.replace(window.location.protocol, 'dapp:'));
+        }
+
         handleMetamask(isMetaMaskInstalled, 'Injected');
 
         analytics({
             type: 'otherEvent',
             name: 'duckies_modal_connect_metamask',
         });
-    }, [isMetaMaskInstalled, handleMetamask]);
+    }, [
+        isMetaMaskInstalled,
+        handleMetamask,
+        isMobile,
+        isBrowser,
+        isMetaMaskInstalled,
+    ]);
 
     const renderModalBody = React.useMemo(() => {
         return (
