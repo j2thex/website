@@ -62,7 +62,7 @@ npm run slicemachine
   - set `JWT_SECRET` env taken from supabase
   - set `NEXT_PUBLIC_DEV_MODE`: `true` or `false` (default: `false`)
 
-## Preparing deployment for UAT:
+## Preparing deployment:
 There 2 type of environment secrets in .drone.yml that we need for running Duckies app:
   1. For UAT
   2. For PROD
