@@ -62,7 +62,7 @@ export const BountyRow: React.FC<BountyProps> = ({
     }, [isClaimStatus]);
 
     const showMoreClassName = React.useMemo(() => {
-        return classnames('border lg:group-hover:border-primary-cta-color-40 lg:group-hover:bg-primary-cta-color-40 rounded-sm lg:px-2 text-base text-neutral-control-layer-color-90 font-gilmer-bold cursor-pointer w-fit flex items-center hover:text-text-color-100', {
+        return classnames('border lg:group-hover:border-primary-cta-color-40 lg:group-hover:bg-primary-cta-color-40 rounded-[0.1875px] lg:px-2 text-xs leading-6 text-neutral-control-layer-color-90 font-gilmer-bold cursor-pointer w-fit flex items-center hover:text-text-color-100', {
             'border-neutral-control-color-40 bg-neutral-control-color-40': !isClaimStatus,
             'border-primary-cta-color-80': isClaimStatus,
         });
@@ -152,12 +152,16 @@ export const BountyRow: React.FC<BountyProps> = ({
                         {index}
                     </div>
                     <div className="flex flex-row gap-3">
-                        <div className="text-xl text-text-color-100">
+                        <div className="text-lg text-text-color-100">
                             {bounty.title}
                         </div>
                         <div className={showMoreClassName}>
                             <span className="hidden lg:block">Show more details</span>
-                            <span className="cr-arrow" />
+                            <span className="px-1.5">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.58064 11.81L6.19177 11.4249C6.06393 11.2915 6 11.1357 6 10.9578C6 10.7762 6.06393 10.6222 6.19177 10.4956L8.7114 8.00002L6.19184 5.50449C6.06401 5.37784 6.00007 5.22382 6.00007 5.04233C6.00007 4.86435 6.06401 4.70855 6.19184 4.5751L6.58071 4.19512C6.71197 4.06502 6.86928 4 7.05247 4C7.23908 4 7.3946 4.06509 7.519 4.1951L10.8939 7.53784C11.0252 7.66113 11.0909 7.8151 11.0909 8C11.0909 8.18143 11.0252 8.33722 10.8939 8.46719L7.519 11.81C7.3911 11.9366 7.23559 12 7.05247 12C6.87269 12 6.71548 11.9366 6.58064 11.81Z" fill="black"/>
+                                </svg>
+                            </span>
                         </div>
                     </div>
                 </div>
