@@ -36,6 +36,10 @@ export default function useMetaMask() {
         return appConfig.blockchain.supportedChainIds.includes(chain?.chainId ?? currentMetamaskChain);
     }, [chain, currentMetamaskChain]);
 
+    const isMetamaskWalletApp = useMemo(() => {
+        return isMobile && isMetaMaskInstalled;
+    }, [isMobile, isMetaMaskInstalled]);
+
     const switchToMainChain = useCallback(async () => {
         try {
             await window?.ethereum?.request({
@@ -181,5 +185,6 @@ export default function useMetaMask() {
         handleMetamask,
         handleDisconnect,
         isMetaMaskInstalled,
+        isMetamaskWalletApp,
     };
 }

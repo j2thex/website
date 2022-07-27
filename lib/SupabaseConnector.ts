@@ -6,11 +6,11 @@ const supabaseAnonKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 // @ts-ignore
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const loginWithProvider = async (provider: string) => {
+export const loginWithProvider = async (provider: string, redirectTo: string) => {
     await supabase.auth.signIn({
         provider: provider as any,
     }, {
-        redirectTo: 'https://www.yellow-org.uat.opendax.app/duckies',
+        redirectTo,
     });
 };
 

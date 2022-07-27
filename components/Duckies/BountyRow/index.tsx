@@ -8,6 +8,7 @@ import { OTPModal } from '../OTPModal';
 import { Decimal } from '../../Decimal';
 import { Captcha } from '../Captcha';
 import { analytics } from '../../../lib/analitics';
+import { isBrowser } from '../../../helpers';
 
 export interface BountyItem {
     fid: string;
@@ -289,8 +290,10 @@ export const BountyRow: React.FC<BountyProps> = ({
     }, [isLoading, renderLoadingModalBody, renderClaimRewardModalBody, isSingleBountyProcessing]);
 
     const handleSocialAuth = React.useCallback((provider: string) => {
-        loginWithProvider(provider);
-    }, []);
+        if (isBrowser()) {
+            loginWithProvider(provider, window.location.href);
+        }
+    }, [isBrowser]);
 
     const renderSocialsModalBody = React.useMemo(() => {
         return (

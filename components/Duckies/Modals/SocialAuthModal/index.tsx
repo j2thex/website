@@ -3,6 +3,8 @@ import { DuckiesModalWindow } from '../../DuckiesModalWindow';
 import Image from 'next/image';
 import { loginWithProvider } from '../../../../lib/SupabaseConnector';
 import { analytics } from '../../../../lib/analitics';
+import useMetaMask from '../../../../hooks/useMetaMask';
+import { isBrowser } from '../../../../helpers';
 
 interface SocialAuthModalProps {
     isOpenModal: boolean;
@@ -13,9 +15,9 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
     isOpenModal,
     setIsOpenModal,
 }: SocialAuthModalProps) => {
-    const handleSocialAuth = React.useCallback((provider: string) => {
-        loginWithProvider(provider);
+    const { isMetamaskWalletApp } = useMetaMask();
 
+    const handleSocialAuth = React.useCallback((provider: string) => {
         analytics({
             type: 'otherEvent',
             name: 'duckies_modal_connect_social',
@@ -23,7 +25,15 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
                 social: provider,
             }
         });
-    }, []);
+
+        if (isMetamaskWalletApp) {
+            window.open(`/auth?action=auth&provider=${provider}`, '_system');
+            return;
+        }
+        if (isBrowser()) {
+            loginWithProvider(provider, window.location.href);
+        }
+    }, [isMetamaskWalletApp, isBrowser]);
 
     const renderModalBody = React.useMemo(() => {
         return (
