@@ -3,12 +3,6 @@ import Head from 'next/head';
 import { isBrowser } from '../../../helpers';
 
 const DuckiesHead: React.FC = () => {
-    const ogImagePath = React.useMemo(() => {
-        if (isBrowser()) {
-            return `${window.location.origin}/images/og-image.png?og-image=duckies`;
-        }
-    }, [isBrowser]);
-
     return (
         <Head>
             <title>Yellow DeFi - Discover WEB 3.0 Internet of Finance</title>
@@ -25,7 +19,7 @@ const DuckiesHead: React.FC = () => {
                 property="og:description"
                 content="The DUCKIES token is a decentralized meme coin and the Yellow community currency for true growth hackers. Join the duckies squad! Quack-quack!"
             />
-            <meta property="og:image" content={ogImagePath} />
+            <meta property="og:image" content="/images/og-image.png?og-image=duckies" />
             <meta property="og:image:width" content="2400" />
             <meta property="og:image:height" content="1260" />
             <meta name="twitter:card" content="summary_large_image" />
@@ -37,7 +31,7 @@ const DuckiesHead: React.FC = () => {
                 name="twitter:description"
                 content="The DUCKIES token is a decentralized meme coin and the Yellow community currency for true growth hackers. Join the duckies squad! Quack-quack!"
             />
-            <meta property="twitter:image" content={ogImagePath} />
+            <meta property="twitter:image" content="/images/og-image.png?og-image=duckies" />
         </Head>
     );
 };
