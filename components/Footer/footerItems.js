@@ -58,7 +58,7 @@ export const FOOTER_ITEMS = {
                 },
                 {
                     label: 'GitHub',
-                    href: 'https://github.com/openware/opendax',
+                    href: 'https://github.com/yellorg',
                 },
             ],
         },
