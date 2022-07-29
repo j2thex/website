@@ -31,7 +31,7 @@ const DuckiesHead: React.FC = () => {
                 name="twitter:description"
                 content="The DUCKIES token is a decentralized meme coin and the Yellow community currency for true growth hackers. Join the duckies squad! Quack-quack!"
             />
-            <meta property="twitter:image" content="/images/og-image.png?og-image=duckies" />
+            <meta name="twitter:image" content="/images/og-image.png?og-image=duckies" />
         </Head>
     );
 };
