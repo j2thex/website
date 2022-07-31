@@ -14,3 +14,9 @@ export interface CountryFlag {
     full_name: string;
     flag_href: string;
 }
+
+export interface Reward {
+    address: string;
+    dailyReceivedAt: Date;
+    streakCount: number;
+}

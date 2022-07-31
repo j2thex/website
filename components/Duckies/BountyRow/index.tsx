@@ -9,6 +9,8 @@ import { Decimal } from '../../Decimal';
 import { Captcha } from '../Captcha';
 import { analytics } from '../../../lib/analitics';
 import { isBrowser } from '../../../helpers';
+import { isPeriodPassed } from '../../../helpers/isPeriodPassed';
+import { appConfig } from '../../../config/app';
 
 export interface BountyItem {
     fid: string;
@@ -18,6 +20,7 @@ export interface BountyItem {
     triggerPhrase: string;
     value: number;
     status: string;
+    additionalData: any;
 }
 
 interface BountyProps {
@@ -28,6 +31,7 @@ interface BountyProps {
     isSingleBountyProcessing: boolean;
     setIsSingleBountyProcessing: (value: boolean) => void;
     supabaseUser: any;
+    triggerUpdateRewards: () => void;
 }
 
 export const BountyRow: React.FC<BountyProps> = ({
@@ -38,6 +42,7 @@ export const BountyRow: React.FC<BountyProps> = ({
     isSingleBountyProcessing,
     setIsSingleBountyProcessing,
     supabaseUser,
+    triggerUpdateRewards,
 }: BountyProps) => {
     const [isOpenShow, setIsOpenShow] = React.useState<boolean>(false);
     const [isOpenClaim, setIsOpenClaim] = React.useState<boolean>(false);
@@ -116,6 +121,21 @@ export const BountyRow: React.FC<BountyProps> = ({
             name: 'duckies_bounties_claim_click',
         });
     }, []);
+
+    React.useEffect(() => {
+        if (!bounty.fid.includes('daily') || bounty.status === 'claim' || isPeriodPassed(appConfig.dailyRewardDuration * 1000, bounty?.additionalData?.claimedAt)) {
+            return;
+        }
+
+        const timeBeforeClaim = +new Date(bounty?.additionalData?.claimedAt || 0) + appConfig.dailyRewardDuration * 1000 - +new Date()
+        const dailyRewardTimeout = setTimeout(() => {
+            triggerUpdateRewards();
+        }, timeBeforeClaim + 1000);
+
+        return () => {
+            clearTimeout(dailyRewardTimeout);
+        }
+    }, [bounty, triggerUpdateRewards]);
 
     const renderBountyStatus = React.useMemo(() => {
         if ((loading && isSingleBountyProcessing) || (bounty.status === 'claim' && isLoading && !isSingleBountyProcessing)) {

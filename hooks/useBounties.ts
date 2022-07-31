@@ -15,6 +15,9 @@ import {
     useFetchSingleTransactionMutation,
 } from '../features/transactions/transactionApi';
 import { useFetchUserQuery } from '../features/users/userApi';
+import { useFetchRewardsDataQuery, useResetStreakRewardMutation, useUpdateDailyRewardMutation } from '../features/rewards/rewardsApi';
+import { appConfig } from '../config/app';
+import { isPeriodPassed } from '../helpers/isPeriodPassed';
 
 
 export default function useBounties(bounties: any) {
@@ -23,6 +26,7 @@ export default function useBounties(bounties: any) {
     const [isRewardsClaimed, setIsRewardsClaimed] = React.useState<boolean>(false);
     const [isReferralClaimed, setIsReferralClaimed] = React.useState<boolean>(false);
     const [phoneVerified, setIsPhoneVerified] = React.useState<boolean>(false);
+    const [isManualUpdateRewards, setIsManualUpdateRewards] = React.useState(false);
 
     const dispatch = useAppDispatch();
     const duckiesContract = useDuckiesContract();
@@ -36,6 +40,12 @@ export default function useBounties(bounties: any) {
     const [fetchSingleTransaction] = useFetchSingleTransactionMutation();
     const [fetchReferralTransaction] = useFetchReferralTransactionMutation();
     const [fetchMultipleTransactions] = useFetchMultipleTransactionsMutation();
+    const [updateDailyReward] = useUpdateDailyRewardMutation();
+    const [resetStreakReward] = useResetStreakRewardMutation();
+
+    const { data: rewardsData, refetch: refetchRewards } = useFetchRewardsDataQuery(account || '', {
+        skip: !account,
+    });
 
     const {
         data: fetchUserResponse,
@@ -107,6 +117,7 @@ export default function useBounties(bounties: any) {
 
     const getClaimedBountyInfo = React.useCallback(async (bounty: any) => {
         let status = '';
+        let additionalData: any = {};
 
         if (signer && !isRewardsClaimProcessing) {
             const bountyId = bounty.fid.split('-')[0];
@@ -132,6 +143,20 @@ export default function useBounties(bounties: any) {
                         status = 'claim';
                     }
                     break;
+                case 'daily':
+                    if (isPeriodPassed(appConfig.dailyRewardDuration * 1000, rewardsData?.dailyReceivedAt)) {
+                        status = 'claim';
+                    } else {
+                        additionalData.claimedAt = rewardsData?.dailyReceivedAt || 0;
+                    }
+                    break;
+                case 'weekly':
+                    if ((rewardsData?.streakCount || 0) >= appConfig.dailyStreakLength) {
+                        status = 'claim';
+                    } else {
+                        additionalData.streakCount = rewardsData?.streakCount || 0;
+                    }
+                    break;
                 default:
             }
         }
@@ -144,6 +169,7 @@ export default function useBounties(bounties: any) {
             newBountyItems[bountyIndex] = {
                 ...bounty,
                 status,
+                additionalData,
             }
             setBountyItems(newBountyItems);
         }
@@ -155,6 +181,7 @@ export default function useBounties(bounties: any) {
         getAffiliatesRuleCompleted,
         phoneVerified,
         isRewardsClaimProcessing,
+        rewardsData,
     ]);
 
     React.useEffect(() => {
@@ -163,7 +190,7 @@ export default function useBounties(bounties: any) {
                 getClaimedBountyInfo(bounty);
             });
         }
-    }, [bountyItems, getClaimedBountyInfo, account]);
+    }, [bountyItems, getClaimedBountyInfo, account, isManualUpdateRewards]);
 
     const bountiesToClaim = React.useMemo(() => {
         return bountyItems
@@ -173,6 +200,7 @@ export default function useBounties(bounties: any) {
 
     const handleClaimReward = React.useCallback(async (id: string, isCaptchaNotResolved: boolean) => {
         const bountyToClaim = bountyItems.find((item: any) => item.fid === id);
+        const bountyIdPrefix = bountyToClaim.fid.split('-')[0];
 
         if (bountyToClaim && signer && !isCaptchaNotResolved) {
             analytics({
@@ -204,6 +232,14 @@ export default function useBounties(bounties: any) {
                         duckies_amount_claim: bountyToClaim.value,
                     },
                 });
+                if (bountyIdPrefix === 'weekly' && account) {
+                    await resetStreakReward(account);
+                    refetchRewards();
+                }
+                if (bountyIdPrefix === 'daily' && account) {
+                    await updateDailyReward(account);
+                    refetchRewards();
+                }
             } catch (error) {
                 dispatch(dispatchAlert({
                     type: 'error',
@@ -302,6 +338,8 @@ export default function useBounties(bounties: any) {
             }
         } else {
             if (bountiesToClaim.length) {
+                const bountyIdPrefixes = bountiesToClaim.map(bounty => bounty.split('-')[0])
+
                 analytics({
                     type: 'otherEvent',
                     name: 'duckies_modal_claim_rewards',
@@ -309,6 +347,7 @@ export default function useBounties(bounties: any) {
                         duckies_amount_claim: amountToClaim,
                     },
                 });
+
                 const { transaction } = await fetchMultipleTransactions({
                     bountyIDs: bountiesToClaim,
                     account,
@@ -330,6 +369,14 @@ export default function useBounties(bounties: any) {
                             duckies_amount_claim: amountToClaim,
                         },
                     });
+                    if (bountyIdPrefixes.includes('weekly') && account) {
+                        await resetStreakReward(account);
+                        refetchRewards();
+                    }
+                    if (bountyIdPrefixes.includes('daily') && account) {
+                        await updateDailyReward(account);
+                        refetchRewards();
+                    }
                 } catch (error) {
                     dispatch(dispatchAlert({
                         type: 'error',
@@ -377,6 +424,10 @@ export default function useBounties(bounties: any) {
         return [amountToClaim as number, bountyTitles as string[]];
     }, [bountyItems, bountiesToClaim, isReferralClaimed]);
 
+    const triggerUpdateRewards = React.useCallback(() => {
+        setIsManualUpdateRewards(!isManualUpdateRewards)
+    }, [isManualUpdateRewards]);
+
     return {
         bountyItems,
         bountiesToClaim,
@@ -391,5 +442,6 @@ export default function useBounties(bounties: any) {
         handleClaimRewards,
         referral_token,
         getBountiesClaimableAmount,
+        triggerUpdateRewards,
     };
 }
