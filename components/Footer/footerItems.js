@@ -62,6 +62,15 @@ export const FOOTER_ITEMS = {
                 },
             ],
         },
+        {
+            title: 'Legal',
+            items: [
+                {
+                    label: 'Privacy policy',
+                    to: '/privacy-policy',
+                },
+            ],
+        },
     ],
     copyright: `Copyright © ${new Date().getFullYear()} Yellow, Inc.`,
 };
