@@ -21,10 +21,24 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
             .eq('address', userAddress)
             .single();
 
+        if (!data) {
+            await supabase
+                .from('rewards')
+                .insert({
+                    address: userAddress,
+                });
+
+            return res.status(200).json({
+                dailyReceivedAt: null,
+                streakCount: 0,
+            }); 
+        }
+
         if (
+            data.last_daily_received_at && 
             isPeriodPassed(
                 2 * appConfig.dailyRewardDuration * 1000,
-                data.daily_streak_count
+                data.last_daily_received_at
             ) &&
             data.daily_streak_count < appConfig.dailyStreakLength
         ) {
@@ -41,7 +55,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         }
 
         return res.status(200).json({
-            dailyReceivedAt: `${data.last_daily_received_at}Z`,
+            dailyReceivedAt: data.last_daily_received_at ? `${data.last_daily_received_at}Z` : null,
             streakCount: data.daily_streak_count,
         });
     } catch (error) {
