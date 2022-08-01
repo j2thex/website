@@ -4,6 +4,8 @@ import { loginWithProvider } from '../lib/SupabaseConnector';
 import { isBrowser } from '../helpers';
 
 const Auth: FC = (): JSX.Element => {
+    const [authToken, setAuthToken] = React.useState<string>('');
+
     const router = useRouter();
     const query = router.query;
 
@@ -18,27 +20,32 @@ const Auth: FC = (): JSX.Element => {
         );
     }, [query]);
 
+    React.useEffect(() => {
+        const authTokenListener = setInterval(() => {
+            const token = localStorage.getItem('supabase.auth.token');
+            if (token) {
+                setAuthToken(token);
+                clearInterval(authTokenListener);
+            }
+        }, 200);
+
+        return () => {
+            clearInterval(authTokenListener);
+        }
+    }, []);
+
     const handleReturnUser = React.useCallback(() => {
-        if (!isBrowser()) {
+        if (!authToken) {
             return;
         }
 
-        const token = localStorage.getItem('supabase.auth.token');
-        if (token) {
-            router.push(
-                `${window.location.origin.replace(
-                    window.location.protocol,
-                    'dapp:'
-                )}/auth?action=saveUser&user_session=${token}`
-            );
-        } else {
-            router.push(
-                `${window.location.origin}/auth?action=returnUser`,
-                undefined,
-                { shallow: true }
-            );
-        }
-    }, [isBrowser]);
+        router.push(
+            `${window.location.origin.replace(
+                window.location.protocol,
+                'dapp:'
+            )}/auth?action=saveUser&user_session=${authToken}`
+        );
+    }, [authToken]);
 
     const handleSaveUser = React.useCallback(() => {
         if (query.user_session && isBrowser()) {
