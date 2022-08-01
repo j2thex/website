@@ -11,4 +11,5 @@ export const appConfig = {
   sendOtpDelay: 60,
   dailyRewardDuration: 24 * 60 * 60,
   dailyStreakLength: 7,
+  swipeTriggerLength: 70,
 }

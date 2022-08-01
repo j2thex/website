@@ -11,6 +11,7 @@ import { analytics } from '../../../lib/analitics';
 import { isBrowser } from '../../../helpers';
 import { isPeriodPassed } from '../../../helpers/isPeriodPassed';
 import { appConfig } from '../../../config/app';
+import { useSetMobileDevice } from '../../../hooks/useMobileDevice';
 
 export interface BountyItem {
     fid: string;
@@ -49,19 +50,20 @@ export const BountyRow: React.FC<BountyProps> = ({
     const [loading, setLoading] = React.useState<boolean>(false);
     const [isCaptchaNotResolved, setIsCaptchaNotResolved] = React.useState<boolean>(true);
     const [shouldResetCaptcha, setShouldResetCaptcha] = React.useState<boolean>(false);
+    const isMobile = useSetMobileDevice();
 
     const isClaimStatus = React.useMemo(() => (
         bounty.status === 'claim' && !((loading && isSingleBountyProcessing) || (isLoading && !isSingleBountyProcessing))
     ), [bounty.status, loading, isLoading, isSingleBountyProcessing]);
 
     const rowClassName = React.useMemo(() => {
-        return classnames('flex w-full items-center border-b border-color-divider-color-40 px-1', {
+        return classnames('h-1/4 sm:h-auto flex w-full items-center border-b border-color-divider-color-40 px-1', {
             'bg-primary-cta-color-10': isClaimStatus,
         });
     }, [isClaimStatus]);
 
     const indexClassName = React.useMemo(() => {
-        return classnames('py-1 px-2.5 text-base w-7 h-8 flex items-center justify-center font-bold rounded-sm mr-4 bg-neutral-control-color-30', {
+        return classnames('py-1 px-2.5 text-sm sm:text-base w-[1.125rem] sm:w-7 h-8 flex items-center justify-center font-metro-semibold sm:font-metro-bold rounded-sm mr-4 bg-neutral-control-color-30', {
             'bg-primary-cta-color-40': isClaimStatus,
         });
     }, [isClaimStatus]);
@@ -140,7 +142,7 @@ export const BountyRow: React.FC<BountyProps> = ({
     const renderBountyStatus = React.useMemo(() => {
         if ((loading && isSingleBountyProcessing) || (bounty.status === 'claim' && isLoading && !isSingleBountyProcessing)) {
             return (
-                <div className="text-base text-system-yellow-60">
+                <div className="text-sm sm:text-base text-system-yellow-60">
                     Processing...
                 </div>
             );
@@ -148,21 +150,21 @@ export const BountyRow: React.FC<BountyProps> = ({
 
         switch (bounty.status) {
             case 'claim':
-                return (
+                return !isMobile && (
                     <div onClick={handleClickClaimReward} className="button button--outline button--secondary button--shadow-secondary">
                         <span className="button__inner">Claim</span>
                     </div>
                 );
             case 'claimed':
                 return (
-                    <div className="text-base text-system-green-60">
+                    <div className="text-sm sm:text-base text-system-green-60">
                         Claimed
                     </div>
                 );
             default:
                 return null;
         }
-    }, [bounty, loading, isLoading, isSingleBountyProcessing, handleClickClaimReward]);
+    }, [bounty, loading, isLoading, isSingleBountyProcessing, handleClickClaimReward, isMobile]);
 
     const renderBounty = React.useMemo(() => {
         return (
@@ -208,6 +210,63 @@ export const BountyRow: React.FC<BountyProps> = ({
         index,
         renderBountyStatus,
         duckiesColor,
+        indexClassName,
+        rowClassName,
+        showMoreClassName,
+        handleSelectBountyId,
+    ]);
+
+    const renderMobileBounty = React.useMemo(() => {
+        return (
+            <div className={rowClassName}>
+                <div onClick={handleSelectBountyId} className="group cursor-pointer flex flex-row items-center py-[1.0625rem] w-1/2">
+                    <div className={indexClassName}>
+                        {index}
+                    </div>
+                    <div className="flex flex-row gap-3">
+                        <div className="text-sm text-text-color-100">
+                            {bounty.title}
+                        </div>
+
+                    </div>
+                </div>
+                <div className="flex items-center text-lg sm:text-2xl leading-[1.625rem] font-gilmer-medium text-text-color-100 w-1/2 justify-end gap-3">
+                    {bounty.status === 'claim' ? (
+                        <div onClick={handleClickClaimReward} className="button button--outline button--secondary button--shadow-secondary">
+                            <span className="button__inner !px-[1.125rem]">Claim</span>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col" onClick={handleSelectBountyId}>
+                            <div className="flex items-center">
+                                <span className="mr-1">{convertNumberToLiteral(bounty.value)}</span>
+                                <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8.76291 4.38889H3.10156V17.6111H8.76291C12.5992 17.6111 15.0016 14.8156 15.0016 11C15.0016 7.10889 12.562 4.38889 8.76291 4.38889ZM8.70704 15.2689H5.63427V6.71222H8.70704C10.9418 6.71222 12.4316 8.43111 12.4316 10.9433C12.4316 13.4933 10.9418 15.2689 8.70704 15.2689Z" fill="#8E8E8E"/>
+                                    <path d="M5.43396 2.5H7.29625V6.27778H5.43396V2.5Z" fill="#8E8E8E"/>
+                                    <path d="M5.43396 15.7222H7.29625V19.5H5.43396V15.7222Z" fill="#8E8E8E"/>
+                                    <path d="M8.22739 2.5H10.0897V6.27778H8.22739V2.5Z" fill="#8E8E8E"/>
+                                    <path d="M8.22739 15.7222H10.0897V19.5H8.22739V15.7222Z" fill="#8E8E8E"/>
+                                </svg>
+                            </div>
+                            <span className="w-full flex justify-end">
+                                {renderBountyStatus}
+                            </span>
+                        </div>
+                    )}
+                    <div className={showMoreClassName} onClick={handleSelectBountyId}>
+                        <span className="p-1">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6.58064 11.81L6.19177 11.4249C6.06393 11.2915 6 11.1357 6 10.9578C6 10.7762 6.06393 10.6222 6.19177 10.4956L8.7114 8.00002L6.19184 5.50449C6.06401 5.37784 6.00007 5.22382 6.00007 5.04233C6.00007 4.86435 6.06401 4.70855 6.19184 4.5751L6.58071 4.19512C6.71197 4.06502 6.86928 4 7.05247 4C7.23908 4 7.3946 4.06509 7.519 4.1951L10.8939 7.53784C11.0252 7.66113 11.0909 7.8151 11.0909 8C11.0909 8.18143 11.0252 8.33722 10.8939 8.46719L7.519 11.81C7.3911 11.9366 7.23559 12 7.05247 12C6.87269 12 6.71548 11.9366 6.58064 11.81Z" fill="black"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    }, [
+        bounty.value,
+        bounty.title,
+        index,
+        renderBountyStatus,
         indexClassName,
         rowClassName,
         showMoreClassName,
@@ -417,7 +476,7 @@ export const BountyRow: React.FC<BountyProps> = ({
 
     return (
         <React.Fragment>
-            {renderBounty}
+            {isMobile ? renderMobileBounty : renderBounty}
             {renderModal}
             {renderClaimModal}
         </React.Fragment>
