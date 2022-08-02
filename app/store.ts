@@ -2,6 +2,7 @@ import { Action, configureStore, ThunkAction } from '@reduxjs/toolkit';
 import { alertsReducer } from '../features/alerts/alertsSlice';
 import { api } from './api';
 import { globalsReducer } from '../features/globals/globalsSlice';
+import { twitterReducer } from '../features/twitter/twitterSlice';
 
 export * from '../features/alerts/alertsSlice';
 export * from '../features/globals/globalsSlice';
@@ -10,6 +11,7 @@ export const store = configureStore({
     reducer: {
         alerts: alertsReducer,
         globals: globalsReducer,
+        twitter: twitterReducer,
         [api.reducerPath]: api.reducer,
     },
     middleware: (getDefaultMiddleware) => {

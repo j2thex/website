@@ -18,6 +18,7 @@ import { useFetchUserQuery } from '../features/users/userApi';
 import { useFetchRewardsDataQuery, useResetStreakRewardMutation, useUpdateDailyRewardMutation } from '../features/rewards/rewardsApi';
 import { appConfig } from '../config/app';
 import { isPeriodPassed } from '../helpers/isPeriodPassed';
+import useTwitterBounties from './useTwitterBounties';
 
 
 export default function useBounties(bounties: any) {
@@ -34,6 +35,7 @@ export default function useBounties(bounties: any) {
     const { affiliates, getAffiliatesRuleCompleted } = useAffiliates();
     const { supportedChain } = useMetaMask();
     const triedToEagerConnect = useEagerConnect();
+    const { isTwitterBountyCoditionsFulfilled } = useTwitterBounties();
 
     const isRewardsClaimProcessing = useAppSelector(state => state.globals.isRewardsClaimProcessing);
     const isPhoneOtpCompleted = useAppSelector(state => state.globals.isPhoneOtpCompleted);
@@ -157,6 +159,13 @@ export default function useBounties(bounties: any) {
                         additionalData.streakCount = rewardsData?.streakCount || 0;
                     }
                     break;
+                case 'twitter':
+                    if (claimedTimes === bounty.limit) {
+                        status = 'claimed';
+                    } else if (isTwitterBountyCoditionsFulfilled(bounty.fid)) {
+                        status = 'claim';
+                    }
+                    break;
                 default:
             }
         }
@@ -182,6 +191,7 @@ export default function useBounties(bounties: any) {
         phoneVerified,
         isRewardsClaimProcessing,
         rewardsData,
+        isTwitterBountyCoditionsFulfilled,
     ]);
 
     React.useEffect(() => {

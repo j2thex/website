@@ -11,6 +11,7 @@ import { analytics } from '../../../lib/analitics';
 import { isBrowser } from '../../../helpers';
 import { isPeriodPassed } from '../../../helpers/isPeriodPassed';
 import { appConfig } from '../../../config/app';
+import { TwitterValidatorModal } from '../Modals/TwitterValidator';
 
 export interface BountyItem {
     fid: string;
@@ -373,6 +374,16 @@ export const BountyRow: React.FC<BountyProps> = ({
     }, [supabaseUser, renderSocialsModalBody, renderClaimModalBody]);
 
     const renderModal = React.useMemo(() => {
+        if (bounty.fid === 'twitter-follow-yellow') {
+            return (
+                <TwitterValidatorModal 
+                    setIsOpenModal={setIsOpenShow}
+                    isOpenModal={isOpenShow}
+                    bounty={bounty}
+                />
+            );
+        }
+
         if (bounty.fid === 'phone-otp') {
             return (
                 <OTPModal
