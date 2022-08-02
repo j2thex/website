@@ -30,6 +30,7 @@ helm pull $HELM_CHART ${version}
 echo "Deploying the Helm release..."
 helm upgrade -i $HELM_RELEASE $HELM_CHART \
     -n ${HELM_NAMESPACE} \
+    --reset-values \
     -f .deploy/helm.yaml \
     ${version} \
     --set image.tag="$(cat .tags)"
