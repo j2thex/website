@@ -32,7 +32,7 @@ interface BountyProps {
     isSingleBountyProcessing: boolean;
     setIsSingleBountyProcessing: (value: boolean) => void;
     supabaseUser: any;
-    triggerUpdateRewards: () => void;
+    getClaimedBountyInfo: (bounty: any) => Promise<void>;
 }
 
 export const BountyRow: React.FC<BountyProps> = ({
@@ -43,7 +43,7 @@ export const BountyRow: React.FC<BountyProps> = ({
     isSingleBountyProcessing,
     setIsSingleBountyProcessing,
     supabaseUser,
-    triggerUpdateRewards,
+    getClaimedBountyInfo,
 }: BountyProps) => {
     const [isOpenShow, setIsOpenShow] = React.useState<boolean>(false);
     const [isOpenClaim, setIsOpenClaim] = React.useState<boolean>(false);
@@ -129,15 +129,15 @@ export const BountyRow: React.FC<BountyProps> = ({
             return;
         }
 
-        const timeBeforeClaim = +new Date(bounty?.additionalData?.claimedAt || 0) + appConfig.dailyRewardDuration * 1000 - +new Date()
+        const timeBeforeClaim = +new Date(bounty?.additionalData?.claimedAt || 0) + appConfig.dailyRewardDuration * 1000 - +new Date();
         const dailyRewardTimeout = setTimeout(() => {
-            triggerUpdateRewards();
+            getClaimedBountyInfo(bounty);
         }, timeBeforeClaim + 1000);
 
         return () => {
             clearTimeout(dailyRewardTimeout);
         }
-    }, [bounty, triggerUpdateRewards]);
+    }, [bounty, getClaimedBountyInfo]);
 
     const renderBountyStatus = React.useMemo(() => {
         if ((loading && isSingleBountyProcessing) || (bounty.status === 'claim' && isLoading && !isSingleBountyProcessing)) {

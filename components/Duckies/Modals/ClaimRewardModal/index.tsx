@@ -24,7 +24,6 @@ export const ClaimRewardModal: React.FC<ClaimRewardModalProps> = ({
     const [isCaptchaNotResolved, setIsCaptchaNotResolved] = React.useState<boolean>(true);
     const [isComponentLoading, setIsComponentLoading] = React.useState<boolean>(true);
     const [shouldResetCaptcha, setShouldResetCaptcha] = React.useState<boolean>(false);
-    const [claimAmount, setClaimAmount] = React.useState<string | number | undefined>(0);
 
     const {
         bountiesToClaim,
@@ -34,6 +33,7 @@ export const ClaimRewardModal: React.FC<ClaimRewardModalProps> = ({
         isSingleBountyProcessing,
         isRewardsClaimed,
         setIsRewardsClaimed,
+        claimedAmount,
     } = useBounties(bounties);
     const isRewardsClaimProcessing = useAppSelector(state => state.globals.isRewardsClaimProcessing);
 
@@ -70,13 +70,6 @@ export const ClaimRewardModal: React.FC<ClaimRewardModalProps> = ({
             });
         }
     }, [isReferralClaimed, isOpenModal, dispatch]);
-
-    React.useEffect(() => {
-        if (!isRewardsClaimed) {
-            const [amountToClaim]: any = getBountiesClaimableAmount();
-            setClaimAmount(amountToClaim);
-        }
-    }, [isRewardsClaimed, getBountiesClaimableAmount]);
 
     const renderLoadingModalBody = React.useMemo(() => {
         return (
@@ -232,7 +225,7 @@ export const ClaimRewardModal: React.FC<ClaimRewardModalProps> = ({
                 </div>
                 <div className="bg-primary-cta-color-10 w-full flex justify-center py-3 mb-4">
                     <div className="text-text-color-100 text-2xl font-gilmer-bold flex items-center">
-                        {Decimal.format(claimAmount, 0, ',')}
+                        {Decimal.format(claimedAmount, 0, ',')}
                         <svg className="ml-3" width="20" height="28" viewBox="0 0 20 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M9.51487 3.11111H0V24.8889H9.51487C15.9624 24.8889 20 20.2844 20 14C20 7.59111 15.8998 3.11111 9.51487 3.11111ZM9.42097 21.0311H4.25665V6.93778H9.42097C13.1768 6.93778 15.6808 9.76889 15.6808 13.9067C15.6808 18.1067 13.1768 21.0311 9.42097 21.0311Z" fill="#ECAA00" />
                             <path d="M3.92 0H7.04989V6.22222H3.92V0Z" fill="#ECAA00" />
@@ -252,7 +245,7 @@ export const ClaimRewardModal: React.FC<ClaimRewardModalProps> = ({
                 </div>
             </div>
         )
-    }, [claimAmount]);
+    }, [claimedAmount]);
 
     const renderModalBody = React.useMemo(() => {
         const referral_token = isBrowser() && localStorage.getItem('referral_token');

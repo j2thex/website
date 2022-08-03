@@ -18,15 +18,15 @@ import { useFetchUserQuery } from '../features/users/userApi';
 import { useFetchRewardsDataQuery, useResetStreakRewardMutation, useUpdateDailyRewardMutation } from '../features/rewards/rewardsApi';
 import { appConfig } from '../config/app';
 import { isPeriodPassed } from '../helpers/isPeriodPassed';
+import { setBountiesArray, updateBountyByFid } from '../features/bounties/bountiesSlice';
 
 
 export default function useBounties(bounties: any) {
     const [isSingleBountyProcessing, setIsSingleBountyProcessing] = React.useState<boolean>(false);
-    const [bountyItems, setBountyItems] = React.useState<any[]>([]);
     const [isRewardsClaimed, setIsRewardsClaimed] = React.useState<boolean>(false);
     const [isReferralClaimed, setIsReferralClaimed] = React.useState<boolean>(false);
     const [phoneVerified, setIsPhoneVerified] = React.useState<boolean>(false);
-    const [isManualUpdateRewards, setIsManualUpdateRewards] = React.useState(false);
+    const [claimedAmount, setClaimedAmount] = React.useState<number>(0);
 
     const dispatch = useAppDispatch();
     const duckiesContract = useDuckiesContract();
@@ -35,6 +35,8 @@ export default function useBounties(bounties: any) {
     const { supportedChain } = useMetaMask();
     const triedToEagerConnect = useEagerConnect();
 
+    const isBountyArrayInitialized = useAppSelector(state => state.bounties.isInitialized);
+    const bountyItems: any[] = useAppSelector(state => state.bounties.bounties);
     const isRewardsClaimProcessing = useAppSelector(state => state.globals.isRewardsClaimProcessing);
     const isPhoneOtpCompleted = useAppSelector(state => state.globals.isPhoneOtpCompleted);
     const [fetchSingleTransaction] = useFetchSingleTransactionMutation();
@@ -77,43 +79,6 @@ export default function useBounties(bounties: any) {
             setIsReferralClaimed(!referral_token || referralLimit === 1 || affiliates[0] > 0);
         })();
     }, [isReady, duckiesContract, isRewardsClaimed, affiliates, referral_token, signer]);
-
-    React.useEffect(() => {
-        if (isRewardsClaimed || isPhoneOtpCompleted) {
-            const newItems = bounties.map((item: any) => {
-                return {
-                    ...item,
-                    status: '',
-                }
-            });
-
-            if (isPhoneOtpCompleted) {
-                dispatch(setIsPhoneOtpCompleted(false));
-            }
-
-            setBountyItems(newItems);
-            refetchUser();
-        }
-    }, [
-        isRewardsClaimed,
-        bounties,
-        account,
-        isPhoneOtpCompleted,
-        dispatch,
-    ]);
-
-    React.useEffect(() => {
-        if (bounties && account && !bountyItems.length) {
-            const newItems = bounties.map((item: any) => {
-                return {
-                    ...item,
-                    status: '',
-                }
-            });
-
-            setBountyItems(newItems);
-        }
-    }, [bounties, account]);
 
     const getClaimedBountyInfo = React.useCallback(async (bounty: any) => {
         let status = '';
@@ -161,23 +126,17 @@ export default function useBounties(bounties: any) {
             }
         }
 
-        const bountyIndex = bountyItems.findIndex((item => item.fid === bounty.fid));
-
-        if (bountyIndex !== -1 && bountyItems[bountyIndex].status !== status) {
-            const newBountyItems = [...bountyItems];
-
-            newBountyItems[bountyIndex] = {
+        dispatch(updateBountyByFid({
+            bounty: {
                 ...bounty,
                 status,
                 additionalData,
-            }
-            setBountyItems(newBountyItems);
-        }
-        return 0;
+            },
+            fid: bounty.fid,
+        }));
     }, [
         duckiesContract,
         signer,
-        bountyItems,
         getAffiliatesRuleCompleted,
         phoneVerified,
         isRewardsClaimProcessing,
@@ -185,12 +144,33 @@ export default function useBounties(bounties: any) {
     ]);
 
     React.useEffect(() => {
-        if (bountyItems.length) {
-            bountyItems.forEach((bounty: any) => {
-                getClaimedBountyInfo(bounty);
-            });
+        if (isPhoneOtpCompleted) {
+            const phoneBounty = bounties.find((bounty: any) => bounty.fid === 'phone-otp');
+            getClaimedBountyInfo(phoneBounty);
+            dispatch(setIsPhoneOtpCompleted(false));
+            refetchUser();
         }
-    }, [bountyItems, getClaimedBountyInfo, account, isManualUpdateRewards]);
+    }, [
+        isPhoneOtpCompleted,
+        bounties,
+        getClaimedBountyInfo,
+    ]);
+
+    React.useEffect(() => {
+        if (bounties.length) {
+            dispatch(setBountiesArray(bounties));
+        }
+    }, [bounties]);
+
+    React.useEffect(() => {
+        if (isBountyArrayInitialized) {
+            bounties.forEach(getClaimedBountyInfo);
+        }
+    }, [
+        bounties,
+        isBountyArrayInitialized,
+        getClaimedBountyInfo,
+    ]);
 
     const bountiesToClaim = React.useMemo(() => {
         return bountyItems
@@ -218,13 +198,18 @@ export default function useBounties(bounties: any) {
 
             try {
                 const tx = await signer.sendTransaction(transaction);
-                await tx.wait();
+                const { status } = await tx.wait();
+                if (status === 0) {
+                    throw new Error('Transaction was reverted');
+                }
+
                 dispatch(dispatchAlert({
                     type: 'success',
                     title: 'Success',
                     message: 'You have successfully claimed the reward!',
                 }));
                 setIsRewardsClaimed(true);
+                getClaimedBountyInfo(bountyToClaim);
                 analytics({
                     type: 'otherEvent',
                     name: 'duckies_claim_rewards_success',
@@ -262,7 +247,24 @@ export default function useBounties(bounties: any) {
         account,
         dispatch,
         setIsRewardsClaimed,
+        getClaimedBountyInfo,
     ]);
+
+    const getBountiesClaimableAmount = React.useCallback(() => {
+        let amountToClaim = !isReferralClaimed ? 10000 : 0;
+        let bountyTitles: string[] = !isReferralClaimed ? ['Newcomer reward'] : [];
+
+        bountiesToClaim.forEach((bountyItem: string) => {
+            const bounty = bountyItems.find(item => item.fid === bountyItem);
+
+            if (bounty) {
+                amountToClaim += bounty.value;
+                bountyTitles.push(bounty.title);
+            }
+        });
+
+        return [amountToClaim as number, bountyTitles as string[]];
+    }, [bountyItems, bountiesToClaim, isReferralClaimed]);
 
     const handleClaimRewards = React.useCallback(async (amountToClaim: number, isCaptchaNotResolved: boolean, setIsCaptchaNotResolved: any, setShouldResetCaptcha: (value: boolean) => void) => {
         if (!signer
@@ -338,7 +340,9 @@ export default function useBounties(bounties: any) {
             }
         } else {
             if (bountiesToClaim.length) {
-                const bountyIdPrefixes = bountiesToClaim.map(bounty => bounty.split('-')[0])
+                const bountyIdPrefixes = bountiesToClaim.map(bounty => bounty.split('-')[0]);
+                const [claimableAmount]: any = getBountiesClaimableAmount();
+                setClaimedAmount(claimableAmount);
 
                 analytics({
                     type: 'otherEvent',
@@ -355,13 +359,23 @@ export default function useBounties(bounties: any) {
 
                 try {
                     const tx = await signer.sendTransaction(transaction);
-                    await tx.wait();
+                    const { status } = await tx.wait();
+                    if (status === 0) {
+                        throw new Error('Transaction was reverted');
+                    }
+
                     dispatch(dispatchAlert({
                         type: 'success',
                         title: 'Success',
                         message: 'You have successfully claimed the reward!',
                     }));
+
                     setIsRewardsClaimed(true);
+                    bountiesToClaim.forEach((bountyFid: string) => {
+                        const bounty = bountyItems.find(item => item.fid === bountyFid);
+                        getClaimedBountyInfo(bounty);
+                    });
+
                     analytics({
                         type: 'otherEvent',
                         name: 'duckies_claim_rewards_success',
@@ -406,27 +420,9 @@ export default function useBounties(bounties: any) {
         bountiesToClaim,
         dispatch,
         referral_token,
+        getClaimedBountyInfo,
+        getBountiesClaimableAmount,
     ]);
-
-    const getBountiesClaimableAmount = React.useCallback(() => {
-        let amountToClaim = !isReferralClaimed ? 10000 : 0;
-        let bountyTitles: string[] = !isReferralClaimed ? ['Newcomer reward'] : [];
-
-        bountiesToClaim.forEach((bountyItem: string) => {
-            const bounty = bountyItems.find(item => item.fid === bountyItem);
-
-            if (bounty) {
-                amountToClaim += bounty.value;
-                bountyTitles.push(bounty.title);
-            }
-        });
-
-        return [amountToClaim as number, bountyTitles as string[]];
-    }, [bountyItems, bountiesToClaim, isReferralClaimed]);
-
-    const triggerUpdateRewards = React.useCallback(() => {
-        setIsManualUpdateRewards(!isManualUpdateRewards)
-    }, [isManualUpdateRewards]);
 
     return {
         bountyItems,
@@ -442,6 +438,7 @@ export default function useBounties(bounties: any) {
         handleClaimRewards,
         referral_token,
         getBountiesClaimableAmount,
-        triggerUpdateRewards,
+        getClaimedBountyInfo,
+        claimedAmount,
     };
 }

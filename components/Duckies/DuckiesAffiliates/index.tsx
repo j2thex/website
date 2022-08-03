@@ -32,7 +32,7 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
         isSingleBountyProcessing,
         setIsSingleBountyProcessing,
         handleClaimReward,
-        triggerUpdateRewards,
+        getClaimedBountyInfo,
     } = useBounties(bountiesItems);
     const isRewardsClaimProcessing = useAppSelector(state => state.globals.isRewardsClaimProcessing);
 
@@ -113,7 +113,7 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
                         isSingleBountyProcessing={isSingleBountyProcessing}
                         setIsSingleBountyProcessing={setIsSingleBountyProcessing}
                         supabaseUser={supabaseUser}
-                        triggerUpdateRewards={triggerUpdateRewards}
+                        getClaimedBountyInfo={getClaimedBountyInfo}
                     />
                 </React.Fragment>
             );
@@ -126,6 +126,7 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
         supabaseUser,
         handleClaimReward,
         setIsSingleBountyProcessing,
+        getClaimedBountyInfo,
     ]);
 
     const handleClickNextButton = React.useCallback((value: number) => {
