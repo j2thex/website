@@ -82,6 +82,8 @@ steps:
         from_secret: twilio_phone_number_prod
       JWT_SECRET:
         from_secret: supabase_jwt_secret_prod
+      NEXT_PUBLIC_PRISMIC_ENDPOINT:
+        from_secret: prismic_endpoint_prod
 
       NEXT_PUBLIC_DEV_MODE: false
     commands:
@@ -131,6 +133,8 @@ steps:
         from_secret: twilio_phone_number_uat
       JWT_SECRET:
         from_secret: supabase_jwt_secret_uat
+      NEXT_PUBLIC_PRISMIC_ENDPOINT:
+        from_secret: prismic_endpoint_uat
     commands:
       - apk add gettext
       - ./.deploy/install.sh
