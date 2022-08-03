@@ -227,7 +227,7 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
         if (!isReady) {
            return (
                 <div onClick={handleClickConnectMetamask} className="w-full button button--outline button--secondary button--shadow-secondary">
-                    <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect Metamask</span>
+                    <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect MetaMask</span>
                 </div>
            );
         }

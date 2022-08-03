@@ -76,7 +76,7 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
 
     const renderMetamaskButton = React.useCallback(() => (
         <div onClick={handleClickConnectMetamask} className="button button--outline button--secondary button--shadow-secondary">
-            <span className="button__inner">Connect Metamask</span>
+            <span className="button__inner">Connect MetaMask</span>
         </div>
     ), [handleClickConnectMetamask]);
 

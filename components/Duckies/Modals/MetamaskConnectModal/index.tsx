@@ -53,7 +53,7 @@ export const MetamaskConnectModal: React.FC<MetamaskConnectModalProps> = ({
                     <Image width="156px" height="156px" src="/images/components/duckies/duckMetamask.png" alt="duck-no-rewards" />
                 </div>
                 <div className="text-text-color-100 text-sm text-center font-metro-regular font-medium mb-6">
-                    Connect Metamask wallet in order to be able to get Duckies tokens
+                    Connect MetaMask wallet in order to be able to get Duckies tokens
                 </div>
                 {isMetaMaskInstalled && (
                     <div className="flex items-center justify-center mb-8">
@@ -75,7 +75,7 @@ export const MetamaskConnectModal: React.FC<MetamaskConnectModalProps> = ({
                 )}
                 <div className="flex items-center justify-center">
                     <div onClick={handleConnectMetamaskClick} className="button button--outline button--secondary button--shadow-secondary">
-                        <span className="button__inner">{isMetaMaskInstalled ? 'Connect Metamask' : 'Install Metamask'}</span>
+                        <span className="button__inner">{isMetaMaskInstalled ? 'Connect MetaMask' : 'Install Metamask'}</span>
                     </div>
                 </div>
             </div>
