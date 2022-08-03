@@ -178,7 +178,7 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
     }, [touchStart, touchEnd]);
 
     React.useEffect(() => {
-        mobileTabs.current.scrollTo({
+        mobileTabs.current?.scrollTo({
             top: 0,
             left: selectedMobileTab == 0 ? 0 : mobileTabs.current.scrollWidth,
             behavior: 'smooth',

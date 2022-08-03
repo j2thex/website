@@ -173,6 +173,29 @@ export default function useMetaMask() {
 
     }, [mainChain, setCurrentMetamaskChain, setSwitchedMainChain]);
 
+    const addDuckiesToken = useCallback(async () => {
+        if (!isBrowser()) {
+            return;
+        }
+
+        try {
+            await (window as any)?.ethereum.request({
+                method: 'wallet_watchAsset',
+                params: {
+                    type: 'ERC20',
+                    options: {
+                        address: appConfig.duckiesSmartContractAddress,
+                        symbol: appConfig.duckiesTokenSymbol,
+                        decimals: appConfig.duckiesTokenDecimals,
+                        image: appConfig.duckiesTokenImage,
+                    },
+                },
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }, [isBrowser]);
+
     return {
         mainChain,
         mainChainIdHex,
@@ -186,5 +209,6 @@ export default function useMetaMask() {
         handleDisconnect,
         isMetaMaskInstalled,
         isMetamaskWalletApp,
+        addDuckiesToken,
     };
 }
