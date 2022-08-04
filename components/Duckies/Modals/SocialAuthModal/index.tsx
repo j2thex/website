@@ -39,7 +39,7 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
         return (
             <div className="flex flex-col w-full p-0.5">
                 <div className="flex justify-center mb-4">
-                    <Image width="156px" height="156px" src="/images/components/duckies/duckiesGroup.svg" alt="duckies-group" />
+                    <Image width="156px" height="156px" src="/images/components/duckies/duckiesGroup.png" alt="duckies-group" />
                 </div>
                 <div className="flex flex-col w-full">
                     <div className="flex w-full mb-1.5 button socials facebook" onClick={() => handleSocialAuth('facebook')}>

@@ -107,7 +107,7 @@ export const DuckiesFAQ = ({ faqList }: DuckiesFAQProps) => {
             <div className="flex items-center justify-center">
                 <div className="absolute z-[10] duck-riddler-animation">
                     <Image
-                        src="/images/components/duckies/duckRiddler.svg"
+                        src="/images/components/duckies/duckRiddler.png"
                         layout="intrinsic"
                         width={300}
                         height={300}
