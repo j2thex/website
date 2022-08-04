@@ -27,6 +27,8 @@
         "@web3-react/injected-connector": "^6.0.7",
         "@web3-react/walletconnect-connector": "^6.2.13",
         "classnames": "^2.3.1",
+        "db-migrate": "^0.11.13",
+        "db-migrate-pg": "^1.2.2",
         "eslint-plugin-import": "^2.26.0",
         "ethers": "^5.6.8",
         "infima": "^0.2.0-alpha.37",

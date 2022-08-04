@@ -1,0 +1,57 @@
+{
+	"dev": {
+		"driver": "pg",
+		"user": {
+			"ENV": "TEST_DATABASE_USER"
+		},
+		"password": {
+			"ENV": "TEST_DATABASE_PASSWORD"
+		},
+		"host": {
+			"ENV": "TEST_DATABASE_HOST"
+		},
+		"database": {
+			"ENV": "TEST_DATABASE_NAME"
+		},
+		"port": {
+			"ENV": "TEST_DATABASE_PORT"
+		}
+	},
+	"uat": {
+		"driver": "pg",
+		"user": {
+			"ENV": "UAT_DATABASE_USER"
+		},
+		"password": {
+			"ENV": "UAT_DATABASE_PASSWORD"
+		},
+		"host": {
+			"ENV": "UAT_DATABASE_HOST"
+		},
+		"database": {
+			"ENV": "UAT_DATABASE_NAME"
+		},
+		"port": {
+			"ENV": "UAT_DATABASE_PORT"
+		}
+	},
+	"prod": {
+		"driver": "pg",
+		"user": {
+			"ENV": "DATABASE_USER"
+		},
+		"password": {
+			"ENV": "DATABASE_PASSWORD"
+		},
+		"host": {
+			"ENV": "DATABASE_HOST"
+		},
+		"database": {
+			"ENV": "DATABASE_NAME"
+		},
+		"port": {
+			"ENV": "DATABASE_PORT"
+		}
+	},
+	"sql-file": true
+}
