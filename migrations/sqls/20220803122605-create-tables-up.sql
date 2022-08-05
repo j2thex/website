@@ -1,34 +1,33 @@
-CREATE TABLE public.country_codes (
-    id bigint NOT NULL,
-    phone_code text,
-    short_name text,
-    full_name text,
-    flag_href text
-);
-
-CREATE TABLE public.emails (
-    address text NOT NULL,
-    email text NOT NULL
-);
-
-CREATE TABLE public.otp (
-    phone_number text NOT NULL,
-    otp text,
-    address text,
-    "reverifyAt" timestamp without time zone DEFAULT now(),
-    "resendAt" timestamp without time zone DEFAULT now()
-);
-
-CREATE TABLE public.rewards (
-    address text NOT NULL,
-    last_daily_received_at timestamp without time zone,
-    daily_streak_count smallint DEFAULT '0'::smallint
-);
-
 CREATE TABLE public.users (
-    address text DEFAULT ''::text NOT NULL,
-    phone_number text,
-    state text DEFAULT 'active'::text NOT NULL,
-    phone_verified boolean DEFAULT false NOT NULL,
-    is_agreed_with_policies boolean DEFAULT false NOT NULL
+    id BIGSERIAL,
+    ref_id bigint,
+    uid uuid UNIQUE NOT NULL,
+    state varchar(32) NOT NULL DEFAULT 'active',
+    data jsonb,
+    created_at timestamp(0) DEFAULT now(),
+    updated_at timestamp(0) DEFAULT now(),
+    PRIMARY KEY (id)
 );
+
+CREATE TABLE public.wallets (
+    id BIGSERIAL,
+    user_id bigint,
+    address VARCHAR (150) UNIQUE NOT NULL,
+    state varchar(20) NOT NULL,
+    created_at timestamp(0) DEFAULT now(),
+    updated_at timestamp(0) DEFAULT now(),
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE public.phones (
+    id BIGSERIAL,
+    user_id bigint,
+    number varchar(128) UNIQUE NOT NULL,
+    code varchar(20),
+    sent_at timestamp(0),
+    verified_at timestamp(0),
+    created_at timestamp(0) DEFAULT now(),
+    updated_at timestamp(0) DEFAULT now(),
+    PRIMARY KEY (id)
+);
+
