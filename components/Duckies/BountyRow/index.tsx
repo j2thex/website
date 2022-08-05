@@ -12,6 +12,9 @@ import { isBrowser } from '../../../helpers';
 import { isPeriodPassed } from '../../../helpers/isPeriodPassed';
 import { appConfig } from '../../../config/app';
 import { useSetMobileDevice } from '../../../hooks/useMobileDevice';
+import useSocialSession from '../../../hooks/useSocialSession';
+import useMetaMask from '../../../hooks/useMetaMask';
+import { MetamaskConnectModal } from '../Modals';
 
 export interface BountyItem {
     fid: string;
@@ -31,7 +34,6 @@ interface BountyProps {
     isLoading: boolean;
     isSingleBountyProcessing: boolean;
     setIsSingleBountyProcessing: (value: boolean) => void;
-    supabaseUser: any;
     getClaimedBountyInfo: (bounty: any) => Promise<void>;
 }
 
@@ -42,7 +44,6 @@ export const BountyRow: React.FC<BountyProps> = ({
     isLoading,
     isSingleBountyProcessing,
     setIsSingleBountyProcessing,
-    supabaseUser,
     getClaimedBountyInfo,
 }: BountyProps) => {
     const [isOpenShow, setIsOpenShow] = React.useState<boolean>(false);
@@ -51,6 +52,8 @@ export const BountyRow: React.FC<BountyProps> = ({
     const [isCaptchaNotResolved, setIsCaptchaNotResolved] = React.useState<boolean>(true);
     const [shouldResetCaptcha, setShouldResetCaptcha] = React.useState<boolean>(false);
     const isMobile = useSetMobileDevice();
+    const { isSocialSession } = useSocialSession();
+    const { isWalletConnected } = useMetaMask();
 
     const isClaimStatus = React.useMemo(() => (
         bounty.status === 'claim' && !((loading && isSingleBountyProcessing) || (isLoading && !isSingleBountyProcessing))
@@ -424,12 +427,12 @@ export const BountyRow: React.FC<BountyProps> = ({
     }, [handleSocialAuth]);
 
     const renderModalBody = React.useMemo(() => {
-        if (!supabaseUser) {
+        if (!isSocialSession) {
             return renderSocialsModalBody;
         }
 
         return renderClaimModalBody;
-    }, [supabaseUser, renderSocialsModalBody, renderClaimModalBody]);
+    }, [isSocialSession, renderSocialsModalBody, renderClaimModalBody]);
 
     const renderModal = React.useMemo(() => {
         if (bounty.fid === 'phone-otp') {
@@ -456,14 +459,23 @@ export const BountyRow: React.FC<BountyProps> = ({
     }, [isOpenShow, renderDetailsModalBody, bounty]);
 
     const renderModalTitle = React.useMemo(() => {
-        if (!supabaseUser) {
+        if (!isSocialSession) {
             return 'Connect social';
         }
 
         return 'Claim reward';
-    }, [supabaseUser]);
+    }, [isSocialSession]);
 
     const renderClaimModal = React.useMemo(() => {
+        if (!isWalletConnected) {
+            return (
+                <MetamaskConnectModal 
+                    isOpenModal={isOpenShow}
+                    setIsOpenModal={setIsOpenShow}
+                />
+            );
+        }
+
         return (
             <DuckiesModalWindow
                 isOpen={isOpenClaim}
@@ -472,7 +484,7 @@ export const BountyRow: React.FC<BountyProps> = ({
                 setIsOpen={setIsOpenClaim}
             />
         );
-    }, [isOpenClaim, renderModalBody, renderModalTitle]);
+    }, [isOpenClaim, renderModalBody, renderModalTitle, isWalletConnected]);
 
     return (
         <React.Fragment>

@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector } from '../app/hooks';
 import useAffiliates from './useAffiliates';
 import { isBrowser } from '../helpers/isBrowser';
 import useMetaMask from './useMetaMask';
-import { useEagerConnect } from './useEagerConnect';
 import { setIsPhoneOtpCompleted, setIsRewardsClaimProcessing } from '../features/globals/globalsSlice';
 import { analytics } from '../lib/analitics';
 import {
@@ -30,10 +29,9 @@ export default function useBounties(bounties: any) {
 
     const dispatch = useAppDispatch();
     const duckiesContract = useDuckiesContract();
-    const { active, account, signer } = useWallet();
+    const { account, signer } = useWallet();
     const { affiliates, getAffiliatesRuleCompleted } = useAffiliates();
-    const { supportedChain } = useMetaMask();
-    const triedToEagerConnect = useEagerConnect();
+    const { isWalletConnected } = useMetaMask();
 
     const isBountyArrayInitialized = useAppSelector(state => state.bounties.isInitialized);
     const bountyItems: any[] = useAppSelector(state => state.bounties.bounties);
@@ -63,14 +61,10 @@ export default function useBounties(bounties: any) {
         }
     }, [fetchUserResponse, isFetchUserSuccessful]);
 
-    const isReady = React.useMemo(() => {
-        return supportedChain && triedToEagerConnect && active && account;
-    }, [supportedChain, triedToEagerConnect, active, account]);
-
     const referral_token = React.useMemo(() => isBrowser() && localStorage.getItem('referral_token'), []);
 
     React.useEffect(() => {
-        if (!isReady || !signer) {
+        if (!isWalletConnected || !signer) {
             return;
         }
 
@@ -78,7 +72,7 @@ export default function useBounties(bounties: any) {
             const referralLimit = +await duckiesContract?.connect(signer).getAccountBountyLimit('referral');
             setIsReferralClaimed(!referral_token || referralLimit === 1 || affiliates[0] > 0);
         })();
-    }, [isReady, duckiesContract, isRewardsClaimed, affiliates, referral_token, signer]);
+    }, [isWalletConnected, duckiesContract, isRewardsClaimed, affiliates, referral_token, signer]);
 
     const getClaimedBountyInfo = React.useCallback(async (bounty: any) => {
         let status = '';

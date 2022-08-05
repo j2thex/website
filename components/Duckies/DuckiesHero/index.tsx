@@ -5,43 +5,34 @@ import useWallet from '../../../hooks/useWallet';
 import { shortenHex } from '../../../utils/utils';
 import { useENSName } from '../../../hooks/useENSName';
 import useMetaMask from '../../../hooks/useMetaMask';
-import { useEagerConnect } from '../../../hooks/useEagerConnect';
 import { convertNumberToLiteral } from '../../../helpers/convertNumberToLiteral';
 import classNames from 'classnames';
 import useBounties from '../../../hooks/useBounties';
 import useDuckiesBalance from '../../../hooks/useDuckiesBalance';
 import { analytics } from '../../../lib/analitics';
 import { BalanceTooltip } from './BalanceTooltip';
+import useSocialSession from '../../../hooks/useSocialSession';
 
 interface DuckiesHeroProps {
     handleOpenModal: () => void;
-    supabaseUser: any;
     bountiesItems: any;
 }
 
 export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
     handleOpenModal,
-    supabaseUser,
     bountiesItems,
 }: DuckiesHeroProps) => {
     const [isOpenBalancesInfo, setIsOpenBalancesInfo] = React.useState<boolean>(false);
 
-    const { active, account, chain } = useWallet();
-    const {
-        supportedChain,
-        handleDisconnect,
-    } = useMetaMask();
+    const { account, chain } = useWallet();
+    const { isWalletConnected, handleDisconnect } = useMetaMask();
     const ENSName = useENSName(account);
-    const triedToEagerConnect = useEagerConnect();
     const {
         isRewardsClaimed,
         setIsRewardsClaimed,
     } = useBounties(bountiesItems);
     const balance = useDuckiesBalance();
-
-    const isReady = React.useMemo(() => {
-        return supportedChain && triedToEagerConnect && active && account;
-    }, [supportedChain, triedToEagerConnect, active, account]);
+    const { isSocialSession } = useSocialSession();
 
     React.useEffect(() => {
         if (isRewardsClaimed) {
@@ -56,10 +47,10 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
             type: 'otherEvent',
             name: 'duckies_claim_reward_hero',
             params: {
-                status: isReady ? (supabaseUser ? 'socials connected' : 'metamask connected' ) : 'not logged in',
+                status: isSocialSession ? (!isWalletConnected ? 'socials connected' : 'metamask connected' ) : 'not logged in',
             },
         });
-    }, [isReady, supabaseUser, handleOpenModal]);
+    }, [isWalletConnected, isSocialSession, handleOpenModal]);
 
     const handleClickConnectMetamask = React.useCallback(() => {
         handleOpenModal();
@@ -111,41 +102,41 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
 
     const renderDuckImage = React.useMemo(() => {
         return (
-            <div className={classNames("flex items-center justify-center rounded-[50%] h-full", { 'border border-primary-cta-color-90': !supabaseUser })}>
-                <div className={classNames('flex items-center justify-center rounded-full', { 'bg-primary-cta-color-20': !!supabaseUser })}>
+            <div className={classNames("flex items-center justify-center rounded-[50%] h-full", { 'border border-primary-cta-color-90': !isWalletConnected })}>
+                <div className={classNames('flex items-center justify-center rounded-full', { 'bg-primary-cta-color-20': !!isWalletConnected })}>
                     <LazyLoadImage
                         srcSet="/images/components/duckies/duckBigEyes.png"
-                        className={classNames('hidden', { 'group-hover:block': isReady })}
+                        className={classNames('hidden', { 'group-hover:block': isSocialSession })}
                     />
                     <LazyLoadImage
                         srcSet="/images/components/duckies/duck.png"
-                        className={classNames('block', { 'group-hover:hidden': isReady })}
+                        className={classNames('block', { 'group-hover:hidden': isSocialSession })}
                     />
                 </div>
             </div>
         );
-    }, [supabaseUser, isReady]);
+    }, [isSocialSession, isWalletConnected]);
 
     const renderDuckBubble = React.useMemo(() => {
         return (
             <div className="hidden group-hover:block">
                 <div className="absolute bg-body-background-color w-[203px] h-[80px] top-[-100%] md:top-[-50%] right-[50%] rounded-[4px] !rounded-br-[0px] flex justify-center items-center shadow-md">
                     <span className="text-[16px] leading-[24px] text-black font-metro-bold">
-                        {(isReady && !supabaseUser) && 'Need to connect socials'}
-                        {(isReady && supabaseUser) && 'Secured duck'}
+                        {(isSocialSession && !isWalletConnected) && 'Need to connect socials'}
+                        {(isSocialSession && isWalletConnected) && 'Secured duck'}
                     </span>
                 </div>
                 <div className="absolute bubble-corner h-[25px] w-[27px] top-[calc(-100%+80px)] md:top-[calc(-50%+80px)] right-[50%] z-20" />
             </div>
         )
-    }, [isReady, supabaseUser])
+    }, [isWalletConnected, isSocialSession])
 
     const renderDuck = React.useMemo(() => {
-        if (!isReady) {
+        if (!isSocialSession) {
             return renderDuckImage;
         }
 
-        if (!supabaseUser) {
+        if (!isWalletConnected) {
             return (
                 <React.Fragment>
                     {renderDuckImage}
@@ -209,22 +200,22 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
                 {renderDuckBubble}
             </React.Fragment>
         );
-    }, [isReady, supabaseUser, renderDuckBubble, renderDuckImage, handleHoverDuckImage]);
+    }, [isWalletConnected, isSocialSession, renderDuckBubble, renderDuckImage, handleHoverDuckImage]);
 
     const renderBalanceCircleButton = React.useMemo(() => {
-        if (!isReady) {
+        if (!isSocialSession) {
            return (
-                <div onClick={handleClickConnectMetamask} className="w-full button button--outline button--secondary button--shadow-secondary">
-                    <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect MetaMask</span>
+                <div onClick={handleClickConnectSocials} className="w-full button button--outline button--secondary button--shadow-secondary">
+                    <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect Social</span>
                 </div>
            );
         }
 
-        if (!supabaseUser) {
+        if (!isWalletConnected) {
             return (
                 <>
-                    <div onClick={handleClickConnectSocials} className="text-center lg:w-full mr-[24px] lg:mr-0 mt-[16px] !mr-0 button button--outline button--secondary button--shadow-secondary">
-                        <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect Social</span>
+                    <div onClick={handleClickConnectMetamask} className="text-center lg:w-full mr-[24px] lg:mr-0 mt-[16px] !mr-0 button button--outline button--secondary button--shadow-secondary">
+                        <span className="button__inner !py-[6px] !px-[18px] !justify-center">Connect MetaMask</span>
                     </div>
                     <div onClick={handleDisconnect} className="group flex flex-row items-center gap-1 mt-2 cursor-pointer">
                         <span className="text-[14px] leading-[22px] font-metro-semibold text-neutral-control-layer-color-60 underline group-hover:text-neutral-control-layer-color-80">Logout</span>
@@ -242,8 +233,8 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
             </div>
         );
     }, [
-        isReady,
-        supabaseUser,
+        isWalletConnected,
+        isSocialSession,
         handleDisconnect,
         handleClickConnectMetamask,
         handleClickConnectSocials,
@@ -312,7 +303,7 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
                             <div className="flex flex-col items-center justify-center rounded-[50%] h-full bg-primary-cta-color-10 border border-primary-cta-color-90 z-[10]">
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <div className={classNames('uppercase font-gilmer-bold text-primary-cta-layer-color-60', {'text-2xl': isReady, 'text-3xl': !isReady})}>
+                                        <div className={classNames('uppercase font-gilmer-bold text-primary-cta-layer-color-60', {'text-2xl': isWalletConnected, 'text-3xl': !isWalletConnected})}>
                                             Balance
                                         </div>
                                         <div onMouseEnter={handleHoverInfoIcon} onMouseLeave={() => setIsOpenBalancesInfo(false)} className="flex ml-2 sm:relative">
@@ -326,7 +317,6 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
                                             </div>
                                             {isOpenBalancesInfo &&
                                                 <BalanceTooltip
-                                                    isReady={!!isReady}
                                                     balance={balance || 0}
                                                     address={ENSName || account || ''}
                                                     network={chain?.network || ''}
@@ -334,7 +324,7 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
                                             }
                                         </div>
                                     </div>
-                                    {isReady ? (
+                                    {isWalletConnected ? (
                                         <div className="flex flex-col items-center justify-center">
                                             <div className="text-2xl text-text-color-100 font-gilmer-medium flex items-center">
                                                 {convertNumberToLiteral(balance ? +balance : 0)}
@@ -357,7 +347,7 @@ export const DuckiesHero: React.FC<DuckiesHeroProps> = ({
                                 </div>
                             </div>
                         </div>
-                        <div className={classNames('group p-[6px] md:p-[10px] rounded-[50%] w-[97px] md:w-[174px] h-[97px] md:h-[174px] bg-primary-cta-color-20 mt-[-18px] md:mt-[-24px] ml-[228px] md:ml-[-78px] z-[9] absolute md:relative shadow-[-5px_5px] shadow-primary-cta-color-90 flex justify-center items-center', { 'hover:shadow-transparent hover:translate-y-[5px]': isReady })} onMouseEnter={handleHoverDuckImage}>
+                        <div className={classNames('group p-[6px] md:p-[10px] rounded-[50%] w-[97px] md:w-[174px] h-[97px] md:h-[174px] bg-primary-cta-color-20 mt-[-18px] md:mt-[-24px] ml-[228px] md:ml-[-78px] z-[9] absolute md:relative shadow-[-5px_5px] shadow-primary-cta-color-90 flex justify-center items-center', { 'hover:shadow-transparent hover:translate-y-[5px]': isWalletConnected })} onMouseEnter={handleHoverDuckImage}>
                             {renderDuck}
                         </div>
                     </div>

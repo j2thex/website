@@ -6,19 +6,17 @@ import { DuckiesRedeem} from '../DuckiesRedeem';
 import { dispatchAlert } from '../../../features/alerts/alertsSlice';
 import { useAppDispatch } from '../../../app/hooks';
 import { DuckiesFAQ } from '../DuckiesFAQ';
-import { supabase } from '../../../lib/SupabaseConnector';
 import { useRouter } from 'next/router';
-import useSocialConnections from '../../../hooks/useSocialConnections';
 import { MetamaskConnectModal } from '../Modals/MetamaskConnectModal';
 import { SocialAuthModal } from '../Modals/SocialAuthModal';
 import { ClaimRewardModal } from '../Modals/ClaimRewardModal';
 import useMetaMask from '../../../hooks/useMetaMask';
-import { useEagerConnect } from '../../../hooks/useEagerConnect';
 import useWallet from '../../../hooks/useWallet';
 import { DuckiesPrizes } from '../DuckiesPrizes'
 import { DuckiesPrizesList } from '../DuckiesPrizes/defaults';
 import { DuckiesBanned } from '../DuckiesBanned';
 import { useFetchUserQuery } from '../../../features/users/userApi';
+import useSession from '../../../hooks/useSocialSession';
 
 interface DuckiesLayoutProps {
     bounties: any;
@@ -30,23 +28,17 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     const [currentModal, setCurrentModal] = React.useState<string>('');
     const { items } = bounties?.data.slices[0];
 
-    const { supportedChain } = useMetaMask();
-    const triedToEagerConnect = useEagerConnect();
-    const { active, account } = useWallet();
+    const { isWalletConnected } = useMetaMask();
+    const { account } = useWallet();
+    const { isSocialSession } = useSession();
 
-    const isReady = React.useMemo(() => {
-        return supportedChain && triedToEagerConnect && active && account;
-    }, [supportedChain, triedToEagerConnect, active, account]);
-
-    const [user, setUser] = React.useState<any>(null);
     const [userStatus, setUserStatus] = React.useState<string>('');
 
     const dispatch = useAppDispatch();
     const router = useRouter();
     const query = router.query;
-    const supabaseUser = supabase.auth.user();
     const { data: fetchUserResponse, isSuccess: isFetchUserSuccessful } = useFetchUserQuery(account || '', {
-        skip: !isReady,
+        skip: !isWalletConnected,
     });
 
     React.useEffect(() => {
@@ -55,7 +47,6 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
         }
     }, [fetchUserResponse, isFetchUserSuccessful]);
 
-    useSocialConnections(user);
 
     React.useEffect(() => {
         if (query.error) {
@@ -69,46 +60,36 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     }, []);
 
     React.useEffect(() => {
-        if (supabaseUser && !user) {
-            setUser(supabaseUser);
-        }
-
-        if (!supabaseUser && user) {
-            setUser(null);
-        }
-    }, [supabaseUser, user]);
-
-    React.useEffect(() => {
-        if ((isReady && currentModal === 'metamask') || (supabaseUser && currentModal === 'social_auth')) {
+        if ((isWalletConnected && currentModal === 'metamask') || (isSocialSession && currentModal === 'social_auth')) {
             handleCloseModal();
         }
-    }, [isReady, supabaseUser, currentModal]);
+    }, [isWalletConnected, isSocialSession, currentModal]);
 
     const handleOpenModal = React.useCallback(() => {
         setIsOpenModal(true);
 
-        if (!isReady) {
-            setCurrentModal('metamask');
-            return;
-        }
-
-        if (!supabaseUser) {
+        if (!isSocialSession) {
             setCurrentModal('social_auth');
             return;
         }
 
+        if (!isWalletConnected) {
+            setCurrentModal('metamask');
+            return;
+        }
+
         setCurrentModal('rewards');
-    }, [isReady, supabaseUser]);
+    }, [isWalletConnected, isSocialSession]);
 
     const handleOpenMetamaskModal = React.useCallback(() => {
         setIsOpenModal(true);
 
-        if (!isReady) {
+        if (!isWalletConnected) {
             setCurrentModal('metamask');
         } else {
             handleCloseModal();
         }
-    }, [isReady]);
+    }, [isWalletConnected]);
 
     const handleCloseModal = React.useCallback(() => {
         setIsOpenModal(false);
@@ -121,13 +102,11 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
                 <div className="bg-primary-cta-color-60">
                     <DuckiesHero
                         bountiesItems={items}
-                        supabaseUser={user}
                         handleOpenModal={handleOpenModal}
                     />
                     <DuckiesAffiliates
                         bountyTitle={bounties.data.title}
                         bountiesItems={items}
-                        supabaseUser={user}
                         handleOpenModal={handleOpenModal}
                     />
                     <DuckiesEarnMore
@@ -156,7 +135,18 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
         } else {
              return <DuckiesBanned />;
         }
-    },[user, items, handleCloseModal, handleOpenModal, handleOpenMetamaskModal, currentModal, isOpenModal, DuckiesPrizesList, faqList, userStatus])
+    }, [
+        isSocialSession,
+        items,
+        handleCloseModal,
+        handleOpenModal,
+        handleOpenMetamaskModal,
+        currentModal,
+        isOpenModal,
+        DuckiesPrizesList,
+        faqList,
+        userStatus,
+    ]);
 
     return (
         <main className="h-full bg-primary-cta-color-60 pb-[5rem] md:pb-[7.5rem] no-scrollbar">

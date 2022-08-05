@@ -11,10 +11,11 @@ import { isBrowser } from '../helpers';
 import { analytics } from '../lib/analitics';
 import { useSetMobileDevice } from './useMobileDevice';
 import { useRouter } from 'next/router';
+import React from 'react';
 
 export default function useMetaMask() {
     const { connectWithProvider, disconnect } = useDApp();
-    const { chain } = useWallet();
+    const { chain, active, account } = useWallet();
     const triedToEagerConnect = useEagerConnect();
     const [isMetaMaskInstalled, setMetaMaskInstalled] = useState<boolean>(true);
     const [isSwitchedMainChain, setSwitchedMainChain] = useState<boolean>(false);
@@ -196,6 +197,10 @@ export default function useMetaMask() {
         }
     }, [isBrowser]);
 
+    const isWalletConnected = React.useMemo(() => {
+        return supportedChain && triedToEagerConnect && active && account;
+    }, [supportedChain, triedToEagerConnect, active, account]);
+
     return {
         mainChain,
         mainChainIdHex,
@@ -210,5 +215,6 @@ export default function useMetaMask() {
         isMetaMaskInstalled,
         isMetamaskWalletApp,
         addDuckiesToken,
+        isWalletConnected,
     };
 }

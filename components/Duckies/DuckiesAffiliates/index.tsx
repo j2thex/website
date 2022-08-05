@@ -14,14 +14,12 @@ import classNames from 'classnames';
 
 interface DuckiesAffiliatesProps {
     bountyTitle: string;
-    supabaseUser: any;
     bountiesItems: any;
     handleOpenModal: () => void;
 }
 
 export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
     bountyTitle,
-    supabaseUser,
     bountiesItems,
     handleOpenModal,
 }: DuckiesAffiliatesProps) => {
@@ -112,7 +110,6 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
                         isLoading={isRewardsClaimProcessing}
                         isSingleBountyProcessing={isSingleBountyProcessing}
                         setIsSingleBountyProcessing={setIsSingleBountyProcessing}
-                        supabaseUser={supabaseUser}
                         getClaimedBountyInfo={getClaimedBountyInfo}
                     />
                 </React.Fragment>
@@ -123,7 +120,6 @@ export const DuckiesAffiliates: React.FC<DuckiesAffiliatesProps> = ({
         page,
         isRewardsClaimProcessing,
         isSingleBountyProcessing,
-        supabaseUser,
         handleClaimReward,
         setIsSingleBountyProcessing,
         getClaimedBountyInfo,

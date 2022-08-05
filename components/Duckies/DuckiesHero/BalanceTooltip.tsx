@@ -7,24 +7,21 @@ import { analytics } from '../../../lib/analitics';
 import { shortenHex } from '../../../utils/utils';
 import { MetamaskIcon } from '../../../assets/MetamaskIcon';
 import useMetaMask from '../../../hooks/useMetaMask';
-import { useSetMobileDevice } from '../../../hooks/useMobileDevice';
 
 interface BalanceTooltipProps {
-    isReady: boolean;
     balance: number;
     address: string;
     network: string;
 }
 
 export const BalanceTooltip: React.FC<BalanceTooltipProps> = ({
-    isReady,
     balance,
     address,
     network,
 }) => {
     const [isCopyClicked, setIsCopyClicked] = React.useState<boolean>(false);
 
-    const { addDuckiesToken } = useMetaMask();
+    const { addDuckiesToken, isWalletConnected } = useMetaMask();
 
     React.useEffect(() => {
         if (!isCopyClicked)
@@ -65,7 +62,7 @@ export const BalanceTooltip: React.FC<BalanceTooltipProps> = ({
                 <h5 className="pb-2 mb-0 text-text-color-100 text-2xl font-gilmer-medium">
                     Connected wallet info
                 </h5>
-                {(isReady && (
+                {(isWalletConnected && (
                     <div className="flex flex-col">
                         <div className="grid grid-cols-2 gap-[1.125rem] sm:gap-0 sm:flex flex-row justify-between">
                             <div className="flex flex-col">

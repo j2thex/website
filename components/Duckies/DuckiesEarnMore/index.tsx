@@ -1,5 +1,5 @@
 import classnames from 'classnames';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { isBrowser } from '../../../helpers/isBrowser';
 import {
     TwitterShareButton,
@@ -8,13 +8,14 @@ import {
     WeiboShareButton,
     FacebookShareButton
 } from 'next-share';
-import { useEagerConnect } from '../../../hooks/useEagerConnect';
 import useWallet from '../../../hooks/useWallet';
 import useMetaMask from '../../../hooks/useMetaMask';
 import Image from 'next/image';
 import { analytics } from '../../../lib/analitics';
 import copyToClipboard from 'copy-to-clipboard';
 import { useFetchReferralTokenQuery } from '../../../features/referral/referralApi';
+import useSocialSession from '../../../hooks/useSocialSession';
+import useWalletSession from '../../../hooks/useWalletSession_';
 
 interface DuckiesEarnMoreProps {
     handleOpenModal: () => void;
@@ -30,19 +31,14 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
     const isBrowserDefined = isBrowser();
 
     const { active, account } = useWallet();
-    const triedToEagerConnect = useEagerConnect();
-
-    const { supportedChain } = useMetaMask();
+    const { isSocialSession } = useSocialSession();
+    const { isWalletConnected } = useMetaMask();
     const {
         data: fetchReferralResponse,
         isSuccess: isFetchReferralSuccessful
     } = useFetchReferralTokenQuery(account || '', {
         skip: !active || !account,
     });
-
-    const isReady = useMemo(() => {
-        return supportedChain && triedToEagerConnect && active && account;
-    }, [supportedChain, triedToEagerConnect, active, account]);
 
     useEffect(() => {
         if (isFetchReferralSuccessful) {
@@ -74,18 +70,24 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
         });
     }, [handleOpenModal]);
 
-    const renderMetamaskButton = React.useCallback(() => (
-        <div onClick={handleClickConnectMetamask} className="button button--outline button--secondary button--shadow-secondary">
-            <span className="button__inner">Connect MetaMask</span>
-        </div>
-    ), [handleClickConnectMetamask]);
+    const renderMetamaskButton = React.useMemo(() => {
+        if (!isSocialSession) {
+            return <></>;
+        }
+
+        return (
+            <div onClick={handleClickConnectMetamask} className="button button--outline button--secondary button--shadow-secondary">
+                <span className="button__inner">Connect MetaMask</span>
+            </div>
+        );
+    }, [handleClickConnectMetamask, isSocialSession]);
 
     const inputLink = classnames('', {
-        'login-gradient w-full w-[20rem] absolute h-16': !isReady,
+        'login-gradient w-full w-[20rem] absolute h-16': !isWalletConnected,
     });
 
     const inputLinkRef = classnames('flex items-center bg-input-background-color border-2 border-text-color-100 rounded mr-4 py-4 px-4 sm:px-5 w-full max-2-full overflow-x-auto no-scrollbar', {
-        'border-r-0 rounded-tr-0 rounded-br-0 left-0 w-[20rem] overflow-hidden': !isReady,
+        'border-r-0 rounded-tr-0 rounded-br-0 left-0 w-[20rem] overflow-hidden': !isWalletConnected,
     });
 
     const message = React.useMemo(() => 'Go and claim your DUCKIES tokens (choose Polygon mainnet on your Wallet for tokens minting)!', []);
@@ -219,7 +221,7 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
     }, [socials, handleSocialIconClick]);
 
     const renderHypnoduck = React.useMemo(() => {
-        if (!isReady) {
+        if (!isWalletConnected) {
             return <></>
         }
 
@@ -243,10 +245,10 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
                 </div>
             </div>
         );
-    }, [isReady]);
+    }, [isWalletConnected]);
 
     const renderReferrerHeader = React.useMemo(() => {
-        if (!isReady) {
+        if (!isWalletConnected) {
             return (
                 <div className="flex flex-col items-left justify-center mb-9">
                     <div className="text-6xl text-text-color-100 font-gilmer-bold pb-2 text-center">
@@ -272,7 +274,7 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
                 </div>
             </div>
         )
-    }, [isReady])
+    }, [isWalletConnected])
 
     const handleCopy = React.useCallback((value: string) => {
         copyToClipboard(value);
@@ -289,15 +291,15 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
                 {renderHypnoduck}
                 <div className="basis-full">
                     {renderReferrerHeader}
-                    <div className={classnames('flex w-full justify-center flex-col', { 'items-center': !isReady, 'items-left': isReady })}>
-                        <div className={classnames('flex relative items-center max-w-screen sm:w-auto -mx-3.5 px-3.5 sm:max-w-[43.75rem] mb-6 sm:mb-5', { 'w-screen': isReady })}>
+                    <div className={classnames('flex w-full justify-center flex-col', { 'items-center': !isWalletConnected, 'items-left': isWalletConnected })}>
+                        <div className={classnames('flex relative items-center max-w-screen sm:w-auto -mx-3.5 px-3.5 sm:max-w-[43.75rem] mb-6 sm:mb-5', { 'w-screen': isWalletConnected })}>
                             <div className={inputLinkRef}>
-                                <div className={classnames("text-text-color-100 text-base font-metro-regular font-bold whitespace-nowrap", { 'overflow-hidden': !isReady })}>
+                                <div className={classnames("text-text-color-100 text-base font-metro-regular font-bold whitespace-nowrap", { 'overflow-hidden': !isWalletConnected })}>
                                     {`${shareableLinkPrefix}${shareableLink}`}
                                 </div>
                                 <div className={inputLink} />
                             </div>
-                            {isReady ? (
+                            {isWalletConnected ? (
                                 <div onClick={() => handleCopy(`${shareableLinkPrefix}${shareableLink}`)} className="button button--outline button--secondary button--shadow-secondary">
                                     <span className={classnames('button__inner !px-6 !py-3.5 relative flex justify-center items-center !w-[4.375rem]', { '!bg-system-green-20': isCopyClicked })}>
                                         {isCopyClicked && (
@@ -323,8 +325,8 @@ export const DuckiesEarnMore: React.FC<DuckiesEarnMoreProps> = ({
                                 </div>
                             )}
                         </div>
-                        <div className={classnames('flex items-center w-full max-w-full no-scrollbar', { 'justify-center': !isReady, 'justify-start ml-[-0.25rem]': isReady })}>
-                            {isReady ? renderSocials : renderMetamaskButton()}
+                        <div className={classnames('flex items-center w-full max-w-full no-scrollbar', { 'justify-center': !isWalletConnected, 'justify-start ml-[-0.25rem]': isWalletConnected })}>
+                            {isWalletConnected ? renderSocials : renderMetamaskButton}
                         </div>
                     </div>
                 </div>
