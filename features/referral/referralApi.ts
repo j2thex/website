@@ -5,12 +5,23 @@ export const referralApi = api.injectEndpoints({
         fetchReferralToken: builder.query<{ token: string }, string>({
             query(account) {
                 return {
-                    url: `/private/users/referralToken?address=${account}`,
+                    url: `/private/referral/referral_token?address=${account}`,
                     method: 'GET',
+                };
+            },
+        }),
+        saveReferral: builder.mutation<void, string>({
+            query(token) {
+                return {
+                    url: `/private/referral/save_referral`,
+                    method: 'POST',
+                    body: {
+                        token,
+                    },
                 };
             },
         }),
     }),
 });
 
-export const { useFetchReferralTokenQuery } = referralApi;
+export const { useFetchReferralTokenQuery, useSaveReferralMutation } = referralApi;

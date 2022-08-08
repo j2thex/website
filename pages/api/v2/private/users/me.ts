@@ -1,11 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../../../lib/SupabaseConnector';
-import jwt from 'jsonwebtoken';
+import { getUserFromCookies } from '../../../../../helpers/getUserFromCookies';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-    const token = req.cookies['sb-access-token'];
-    const data = jwt.verify(token, process.env.JWT_SECRET || '');
-    const userId = data.sub as string;
+    const userId = getUserFromCookies(req.cookies).sub;
 
     try {
         // TODO: make foreign key relations and fetch all data related to user in one call

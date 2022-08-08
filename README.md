@@ -126,11 +126,11 @@ There 2 type of environment secrets in .drone.yml that we need for running Ducki
 Please, be sure you have those environment variables before doing migration process in dev mode
 All those envs are exposing information of your database
 
-- `TEST_DATABASE_USER`
-- `TEST_DATABASE_PASSWORD`
-- `TEST_DATABASE_HOST`
-- `TEST_DATABASE_NAME`
-- `TEST_DATABASE_PORT`
+- `DATABASE_USER`
+- `DATABASE_PASSWORD`
+- `DATABASE_HOST`
+- `DATABASE_NAME`
+- `DATABASE_PORT`
 
 When first running the migrations, all will be executed in sequence. A table named migrations will also be created in your database to track which migrations have been applied.
 `$ db-migrate up`

@@ -15,4 +15,6 @@ export const appConfig = {
   dailyRewardDuration: 24 * 60 * 60,
   dailyStreakLength: 7,
   swipeTriggerLength: 70,
+  referralDuckiesAmount: 10000,
+  decimalBase: 10,
 }

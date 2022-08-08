@@ -15,6 +15,7 @@ import { DuckiesPrizes } from '../DuckiesPrizes'
 import { DuckiesPrizesList } from '../DuckiesPrizes/defaults';
 import { DuckiesBanned } from '../DuckiesBanned';
 import useSocialSession from '../../../hooks/useSocialSession';
+import useReferral from '../../../hooks/useReferral';
 
 interface DuckiesLayoutProps {
     bounties: any;
@@ -27,7 +28,8 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     const { items } = bounties?.data.slices[0];
 
     const { isWalletConnected } = useMetaMask();
-    const { isSocialSession, userData } = useSocialSession();
+    const { isSocialSession, userData, refetchUserData } = useSocialSession();
+    useReferral(refetchUserData);
 
     const dispatch = useAppDispatch();
     const router = useRouter();
