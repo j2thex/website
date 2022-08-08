@@ -15,7 +15,6 @@ import { analytics } from '../../../lib/analitics';
 import copyToClipboard from 'copy-to-clipboard';
 import { useFetchReferralTokenQuery } from '../../../features/referral/referralApi';
 import useSocialSession from '../../../hooks/useSocialSession';
-import useWalletSession from '../../../hooks/useWalletSession_';
 
 interface DuckiesEarnMoreProps {
     handleOpenModal: () => void;

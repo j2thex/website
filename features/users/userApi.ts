@@ -1,22 +1,32 @@
 import { api } from '../../app/api';
-import jwt from 'jsonwebtoken';
 import { User } from '../../app/types';
+import { Session } from '@supabase/supabase-js';
+import { setIsSessionCookie } from '../globals/globalsSlice';
 
 export const userApi = api.injectEndpoints({
     endpoints: (builder) => ({
-        fetchUser: builder.query<User, string>({
-            query: (account) => ({
-                url: '/private/users/me',
+        fetchUser: builder.query<User, void>({
+            query: () => '/private/users/me',
+        }),
+        setSessionCookie: builder.query<void, Session | null>({
+            query: (session) => ({
+                url: '/public/setSessionCookie',
                 method: 'POST',
-                body: jwt.sign(
-                    {
-                        account,
-                    },
-                    process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || ''
-                ),
+                body: {
+                    event: session ? 'SIGNED_IN' : 'SIGNED_OUT',
+                    session,
+                },
             }),
+            async onQueryStarted(session, { dispatch, queryFulfilled }) {
+                try {
+                    await queryFulfilled;
+                    dispatch(setIsSessionCookie(!!session));
+                } catch (err) {
+                    console.error(err);
+                }
+            },
         }),
     }),
 });
 
-export const { useFetchUserQuery } = userApi;
+export const { useFetchUserQuery, useSetSessionCookieQuery } = userApi;

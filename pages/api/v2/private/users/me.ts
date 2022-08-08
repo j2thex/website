@@ -1,33 +1,28 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../../../../lib/SupabaseConnector';
 import jwt from 'jsonwebtoken';
-import { withDuckiesSession } from '../../../../../helpers/withDuckiesSession';
-import { hidePhoneNumber } from '../../../../../helpers/hidePhoneNumbers';
 
-async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
-) {
-    const userAddress = req.body.account;
-
-    const token = jwt.sign({ metamaskAddress: userAddress }, process.env.JWT_SECRET || '');
-    supabase.auth.setAuth(token);
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const token = req.cookies['sb-access-token'];
+    const data = jwt.verify(token, process.env.JWT_SECRET || '');
+    const userId = data.sub as string;
 
     try {
-        let { data } = await supabase
+        // TODO: make foreign key relations and fetch all data related to user in one call
+        const { data, error } = await supabase
             .from('users')
             .select('*')
-            .eq('address', userAddress)
+            .eq('uid', userId)
             .single();
 
-        return res.status(200).json({
-            status: data?.state,
-            isPhoneVerified: data?.phone_verified,
-            phoneNumber: hidePhoneNumber(data?.phone_number),
-        });
+        if (!data || error) {
+            throw error || new Error('User does not exist');
+        }
+
+        return res.status(200).json(data);
     } catch (error) {
         return res.status(400).json({ error });
     }
 }
 
-export default withDuckiesSession(handler);
+export default handler;

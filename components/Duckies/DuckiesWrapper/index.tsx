@@ -11,12 +11,10 @@ import { MetamaskConnectModal } from '../Modals/MetamaskConnectModal';
 import { SocialAuthModal } from '../Modals/SocialAuthModal';
 import { ClaimRewardModal } from '../Modals/ClaimRewardModal';
 import useMetaMask from '../../../hooks/useMetaMask';
-import useWallet from '../../../hooks/useWallet';
 import { DuckiesPrizes } from '../DuckiesPrizes'
 import { DuckiesPrizesList } from '../DuckiesPrizes/defaults';
 import { DuckiesBanned } from '../DuckiesBanned';
-import { useFetchUserQuery } from '../../../features/users/userApi';
-import useSession from '../../../hooks/useSocialSession';
+import useSocialSession from '../../../hooks/useSocialSession';
 
 interface DuckiesLayoutProps {
     bounties: any;
@@ -29,24 +27,11 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     const { items } = bounties?.data.slices[0];
 
     const { isWalletConnected } = useMetaMask();
-    const { account } = useWallet();
-    const { isSocialSession } = useSession();
-
-    const [userStatus, setUserStatus] = React.useState<string>('');
+    const { isSocialSession, userData } = useSocialSession();
 
     const dispatch = useAppDispatch();
     const router = useRouter();
     const query = router.query;
-    const { data: fetchUserResponse, isSuccess: isFetchUserSuccessful } = useFetchUserQuery(account || '', {
-        skip: !isWalletConnected,
-    });
-
-    React.useEffect(() => {
-        if (isFetchUserSuccessful) {
-            setUserStatus(fetchUserResponse.status || '');
-        }
-    }, [fetchUserResponse, isFetchUserSuccessful]);
-
 
     React.useEffect(() => {
         if (query.error) {
@@ -97,7 +82,7 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
     }, []);
 
     const renderContent = React.useMemo(() => {
-        if (userStatus !== 'banned') {
+        if (userData?.status !== 'banned') {
             return (
                 <div className="bg-primary-cta-color-60">
                     <DuckiesHero
@@ -145,7 +130,7 @@ export const DuckiesLayout: FC<DuckiesLayoutProps> = ({ bounties, faqList }: Duc
         isOpenModal,
         DuckiesPrizesList,
         faqList,
-        userStatus,
+        userData,
     ]);
 
     return (

@@ -9,7 +9,7 @@ import { Decimal } from '../../Decimal';
 import { dispatchAlert } from '../../../app/store';
 import { Captcha } from '../Captcha';
 import { useVerifyPhoneMutation } from '../../../features/phone/phoneApi';
-import { useFetchUserQuery } from '../../../features/users/userApi';
+import useSocialSession from '../../../hooks/useSocialSession';
 
 interface OTPModalProps {
     bounty: string | number;
@@ -32,7 +32,6 @@ export const OTPModal: React.FC<OTPModalProps> = ({
     const [isOtpIncorrect, setIsOtpIncorrect] = React.useState<boolean>(false);
     const [phone, setPhone] = React.useState<string>('');
     const [otp, setOtp] = React.useState<string>('');
-    const [verifiedPhone, setVerifiedPhone] = React.useState<string>('');
     const [isCodeSent, setIsCodeSent] = React.useState<boolean>(false);
     const [isCaptchaResolved, setIsCaptchaResolved] = React.useState<boolean>(false);
     const [shouldResetCaptcha, setShouldResetCaptcha] = React.useState<boolean>(false);
@@ -40,15 +39,7 @@ export const OTPModal: React.FC<OTPModalProps> = ({
     const { account } = useWallet();
     const dispatch = useAppDispatch();
     const [verifyPhone] = useVerifyPhoneMutation();
-    const { data: fetchUserResponse, isSuccess: isFetchUserSuccessful } = useFetchUserQuery(account || '', {
-        skip: !isSuccess || !account,
-    });
-
-    React.useEffect(() => {
-        if (isFetchUserSuccessful) {
-            setVerifiedPhone(fetchUserResponse.phoneNumber || '');
-        }
-    }, [fetchUserResponse, isFetchUserSuccessful]);
+    const { userData } = useSocialSession();
 
     React.useEffect(() => {
         setShouldResetCaptcha(true);
@@ -164,7 +155,7 @@ export const OTPModal: React.FC<OTPModalProps> = ({
     const renderSuccess = React.useMemo(() => {
         return (
             <div className="flex flex-col items-center w-full">
-                <span className="text-base text-text-color-100 font-metro-semibold mb-3">Phone number: {verifiedPhone} was verified.</span>
+                <span className="text-base text-text-color-100 font-metro-semibold mb-3">Phone number: {userData?.phoneNumber} was verified.</span>
                 {renderBounty}
                 {bountyStatus === 'claim' && 
                     <span className="text-base text-center text-text-color-100 font-metro-medium mt-5">Your reward for completing this quest can be claimed now</span>
@@ -177,7 +168,7 @@ export const OTPModal: React.FC<OTPModalProps> = ({
                 </button>
             </div>
         );
-    }, [renderBounty, verifiedPhone, setIsOpen, bountyStatus]);
+    }, [renderBounty, userData, setIsOpen, bountyStatus]);
 
     return (
         <DuckiesModalWindow

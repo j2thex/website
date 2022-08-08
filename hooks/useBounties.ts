@@ -13,18 +13,16 @@ import {
     useFetchReferralTransactionMutation,
     useFetchSingleTransactionMutation,
 } from '../features/transactions/transactionApi';
-import { useFetchUserQuery } from '../features/users/userApi';
 import { useFetchRewardsDataQuery, useResetStreakRewardMutation, useUpdateDailyRewardMutation } from '../features/rewards/rewardsApi';
 import { appConfig } from '../config/app';
 import { isPeriodPassed } from '../helpers/isPeriodPassed';
 import { setBountiesArray, updateBountyByFid } from '../features/bounties/bountiesSlice';
-
+import useSocialSession from './useSocialSession';
 
 export default function useBounties(bounties: any) {
     const [isSingleBountyProcessing, setIsSingleBountyProcessing] = React.useState<boolean>(false);
     const [isRewardsClaimed, setIsRewardsClaimed] = React.useState<boolean>(false);
     const [isReferralClaimed, setIsReferralClaimed] = React.useState<boolean>(false);
-    const [phoneVerified, setIsPhoneVerified] = React.useState<boolean>(false);
     const [claimedAmount, setClaimedAmount] = React.useState<number>(0);
 
     const dispatch = useAppDispatch();
@@ -48,18 +46,9 @@ export default function useBounties(bounties: any) {
     });
 
     const {
-        data: fetchUserResponse,
-        isSuccess: isFetchUserSuccessful,
-        refetch: refetchUser
-    } = useFetchUserQuery(account || '', {
-        skip: !signer || !account,
-    });
-
-    React.useEffect(() => {
-        if (isFetchUserSuccessful) {
-            setIsPhoneVerified(fetchUserResponse.isPhoneVerified || false);
-        }
-    }, [fetchUserResponse, isFetchUserSuccessful]);
+        userData,
+        refetchUserData,
+    } = useSocialSession();
 
     const referral_token = React.useMemo(() => isBrowser() && localStorage.getItem('referral_token'), []);
 
@@ -98,7 +87,7 @@ export default function useBounties(bounties: any) {
                 case 'phone':
                     if (claimedTimes === bounty.limit) {
                         status = 'claimed';
-                    } else if (phoneVerified) {
+                    } else if (userData?.isPhoneVerified) {
                         status = 'claim';
                     }
                     break;
@@ -132,7 +121,7 @@ export default function useBounties(bounties: any) {
         duckiesContract,
         signer,
         getAffiliatesRuleCompleted,
-        phoneVerified,
+        userData?.isPhoneVerified,
         isRewardsClaimProcessing,
         rewardsData,
     ]);
@@ -142,7 +131,7 @@ export default function useBounties(bounties: any) {
             const phoneBounty = bounties.find((bounty: any) => bounty.fid === 'phone-otp');
             getClaimedBountyInfo(phoneBounty);
             dispatch(setIsPhoneOtpCompleted(false));
-            refetchUser();
+            refetchUserData();
         }
     }, [
         isPhoneOtpCompleted,
