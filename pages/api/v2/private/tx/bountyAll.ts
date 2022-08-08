@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import DuckiesContractBuild from '../../../../../contracts/artifacts/contracts/Duckies.sol/Duckies.json';
 import Web3 from 'web3';
 import { createClient } from '../../../../../prismicio';
+import jwt from 'jsonwebtoken';
 
 const web3 = new Web3(new Web3.providers.HttpProvider(process.env.NEXT_PUBLIC_POLYGON_URL || ''));
 const privateKey = process.env.NEXT_PUBLIC_METAMASK_PRIVATE_KEY || '';
@@ -85,7 +86,15 @@ const getBountyTransactionObject = async (bountiesIDs: string[], account: string
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const token = req.cookies['sb-access-token'];
+    const data = jwt.verify(token, process.env.JWT_SECRET || '');
+    const userId = data.sub as string;
+
     try {
+        if (!userId) {
+            new Error('Unauthorized');
+        }
+
         const bountyIDs = (req.query.bountyIDs as string).split(',');
         const tx = await getBountyTransactionObject(bountyIDs, req.query.account as string);
 

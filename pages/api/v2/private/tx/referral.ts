@@ -56,7 +56,15 @@ const getTX = async (token: string, account: string) => {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    const token = req.cookies['sb-access-token'];
+    const data = jwt.verify(token, process.env.JWT_SECRET || '');
+    const userId = data.sub as string;
+
     try {
+        if (!userId) {
+            new Error('Unauthorized');
+        }
+
         const tx = await getTX(req.query.token as string, req.query.account as string);
 
         res.status(200).json(tx);

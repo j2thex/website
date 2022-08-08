@@ -4,8 +4,8 @@ import jwt from 'jsonwebtoken';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
     const token = req.cookies['sb-access-token'];
-    const data = jwt.verify(token, process.env.JWT_SECRET || '');
-    const userId = data.sub as string;
+    const jwtData = jwt.verify(token, process.env.JWT_SECRET || '');
+    const userId = jwtData.sub as string;
 
     try {
         // TODO: make foreign key relations and fetch all data related to user in one call
