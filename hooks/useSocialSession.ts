@@ -21,9 +21,13 @@ const useSocialSession = () => {
     React.useEffect(() => {
         const supabaseSession = supabase.auth.session();
         handleSession(supabaseSession);
-        supabase.auth.onAuthStateChange((_event: any, session: any) => {
+        const { data: listenter } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             handleSession(session);
         });
+
+        return () => {
+            listenter?.unsubscribe();
+        }
     }, [supabase, handleSession]);
 
     return {
