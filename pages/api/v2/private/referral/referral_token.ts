@@ -5,6 +5,7 @@ import DuckiesContractBuild from '../../../../../contracts/artifacts/contracts/D
 import { getUserFromCookies } from '../../../../../helpers/getUserFromCookies';
 import { supabase } from '../../../../../lib/SupabaseConnector';
 import { appConfig } from '../../../../../config/app';
+import { getUserFromDatabase } from '../../../../../helpers/getUserFromDatabase';
 
 const generateJWTWithRef = async (ref: string, ref_id: number) => {
     const jwtPrivateKey = process.env.NEXT_PUBLIC_JWT_PRIVATE_KEY || '';
@@ -37,17 +38,13 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    const userId = getUserFromCookies(req.cookies).sub;
-    const { data } = await supabase
-        .from('users')
-        .select('id')
-        .eq('uid', userId)
-        .single();
+    const userUid = getUserFromCookies(req.cookies).sub;
+    const { id: userId } = await getUserFromDatabase(userUid);
 
     // TODO: get address from db
     const linkResponse = await generateJWTWithRef(
         req.query.address as string,
-        data?.id as number,
+        userId as number,
     );
 
     res.status(200).json({ token: linkResponse });

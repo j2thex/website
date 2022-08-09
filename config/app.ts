@@ -17,4 +17,5 @@ export const appConfig = {
   swipeTriggerLength: 70,
   referralDuckiesAmount: 10000,
   decimalBase: 10,
+  validSignatureDuration: 60 * 10 ** 9,
 }
