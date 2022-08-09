@@ -16,7 +16,7 @@ export const Tokenomics: React.FC = () => {
 
                         <div className="subtitle-2-18-600">
                             <p>
-                                $YELLOW is a native token for clearing fees on Yellow Network.
+                                $YELLOW is a native token on Yellow Network.
                                 Market makers, brokers, and traders inside
                                 the network will be the main users of the token.
                             </p>
@@ -25,7 +25,6 @@ export const Tokenomics: React.FC = () => {
 
                             <ul className="tokenomics__utilities-list">
                                 <li>Collateral and clearing fee settlements between brokers inside Yellow Network</li>
-                                <li>Trading fee discount on <a href='https://yellow.com'>yellow.com</a> Exchange</li>
                                 <li>Social and content rewards on Yellow Capital</li>
                                 <li>Staking to brokers</li>
                                 <li>Yellow Foundation development governance</li>
